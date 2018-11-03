@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+
+import tf
+import tf2_ros
+import rospy
+from math import pi
+
+import geometry_msgs.msg
+from nav_msgs.msg import Odometry
+
+from low_level_interface.msg import lli_ctrl_request
+#TODO: Use low_level_interface on NVIDIA
+from geometry_msgs.msg import Twist
+from car_model import KinematicBicycle
+
+
+class VehicleSimulation:
+    """
+    The vehicle class listens to the control and triggers the simulation
+    """
+    def __init__(self, model):
+        # model created in the main file
+        self.model = model
+
+        # Needed for RViz visualization
+        self.vehicle_frame_id = "base"
+        self.global_frame_id = "odom"
+        self.broadcaster = tf2_ros.TransformBroadcaster()
+        self.t = geometry_msgs.msg.TransformStamped()
+        self.odometry_sim = Odometry()
+
+        # Initialize Publishers/Subscribers
+        self.pub_odometry = rospy.Publisher('/simulator/odom', Odometry, queue_size=1)
+        self.sub_control = rospy.Subscriber('/lli/ctrl_request', lli_ctrl_request, self.step_simulation)
+
+        # Initialize node
+        #rospy.init_node('car_simulation_node', anonymous = True)
+
+    def step_simulation(self, data):
+        """
+        :param data:
+        :return:
+        """
+        # update state
+        velocity = data.velocity * 0.01
+        steering_angle = data.steering * 0.01 *pi/4
+        print(steering_angle)
+        print(velocity)
+        self.model.update_state(v=velocity, delta=steering_angle)
+        vehicle_state = self.model.get_state()
+
+        # publish new odometry
+        current_time = rospy.Time.now()
+        self.update_transform(vehicle_state, current_time)
+        self.update_odom(vehicle_state, current_time)
+
+        # broadcast transform and publish
+        self.broadcaster.sendTransform(self.t)
+        self.pub_odometry.publish(self.odometry_sim)
+
+    def update_transform(self, vehicle_state, current_time):
+        """
+        Updates the trasnforms, given the vehicle state
+        :param vehicle_state:
+        :return:
+        """
+        self.t.header.stamp = current_time
+        self.t.header.frame_id = self.global_frame_id
+        self.t.child_frame_id = self.vehicle_frame_id
+        self.t.transform.translation.x = vehicle_state['x']
+        self.t.transform.translation.y = vehicle_state['y']
+        self.t.transform.translation.z = 0
+
+        q = tf.transformations.quaternion_from_euler(0, 0, vehicle_state['yaw'])
+        self.t.transform.rotation.x = q[0]
+        self.t.transform.rotation.y = q[1]
+        self.t.transform.rotation.z = q[2]
+        self.t.transform.rotation.w = q[3]
+
+    def update_odom(self, vehicle_state, current_time):
+        """
+        Updates the odometry, given the vehicle state
+        :param vehicle_state:
+        :return:
+        """
+        self.odometry_sim.header.stamp = current_time
+        self.odometry_sim.header.frame_id = self.global_frame_id
+        self.odometry_sim.child_frame_id = self.vehicle_frame_id
+        self.odometry_sim.pose.pose.position.x = vehicle_state['x']
+        self.odometry_sim.pose.pose.position.y = vehicle_state['y']
+
+        q = tf.transformations.quaternion_from_euler(0, 0, vehicle_state['yaw'])
+        self.odometry_sim.pose.pose.position.z = 0.0
+        self.odometry_sim.pose.pose.orientation.x = q[0]
+        self.odometry_sim.pose.pose.orientation.y = q[1]
+        self.odometry_sim.pose.pose.orientation.z = q[2]
+        self.odometry_sim.pose.pose.orientation.w = q[3]
+
+
+
+if __name__ == "__main__":
+    car_1 = KinematicBicycle()
+    rospy.init_node('car_simulation_node', anonymous=True)
+    sim = VehicleSimulation(car_1)
+    rospy.spin()
+
+
+
+
+
