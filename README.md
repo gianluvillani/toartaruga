@@ -30,10 +30,9 @@ Translate message from Twist to lli_ctrl_request:
 If you want to simulate and visualize the vehicle as well   
 <code>
   $ rosrun vehicle_simulation simulator.py   
-  
   $ rviz rviz
 </code>
 
 ### Simulator Structure (Gianluca - Week 1)
 The simulator implements a simple kinematic bicycle model and a visualization in RViz. The discretized model used is taken from https://github.com/MPC-Berkeley/barc/wiki/Car-Model.
-The simulated states are computed as often as a new input is sent to the car. (Future improvement: control should not necessarily 'synchronized' with the simulation. More explanation later )
+The simulated states are computed as often as a new input is sent to the car. (Future improvement: control should not necessarily 'synchronized' with the simulation. More explanation later)
