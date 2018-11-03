@@ -7,13 +7,11 @@ Group 2 code for SML Grand Challenge Project Course (KTH)
 
 # Run the manual(teleop) controller
 Start roscore
-
 <code>
   $ roscore
 </code>
 
 Start serial communication
-
 <code>
 $ rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200
 </code>
