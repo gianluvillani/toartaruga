@@ -7,27 +7,31 @@ Group 2 code for SML Grand Challenge Project Course (KTH)
 
 # Run the manual(teleop) controller
 Start roscore
-<pre><code>
+
+<code>
   $ roscore
-</code></pre>
+</code>
 
 Start serial communication
-<pre><code>
+
+<code>
 $ rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200
-</code></pre>
+</code>
 
 Activate key_teleop to send signals via keyboard:
-<pre><code>
+
+<code>
 $ rosrun key_teleop key_teleop.py 
-</code></pre>
+</code>
 
 
 Translate message from Twist to lli_ctrl_request:
-<pre><code>
+<code>
 $ rosrun custom_teleop teleop_transcriber.py
-</code></pre>
+</code>
 
 If you want to simulate the vehicle as well
-<pre><code>
+
+<code>
 $ rosrun vehicle_simulation simulator.py 
-</code></pre>
+</code>
