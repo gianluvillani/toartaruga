@@ -35,4 +35,8 @@ If you want to simulate and visualize the vehicle as well
 
 ### Simulator Structure (Gianluca - Week 1)
 The simulator implements a simple kinematic bicycle model and a visualization in RViz. The discretized model used is taken from https://github.com/MPC-Berkeley/barc/wiki/Car-Model.
-The simulated states are computed as often as a new input is sent to the car. (Future improvement: control should not necessarily 'synchronized' with the simulation. More explanation later)
+The simulated states are computed as often as a new input is sent to the car. 
+Possible features to be implemented/modified:
+- Control should not be necessarily 'synchronized' with the simulation. More explanation later
+- Path publishing and visualization in RViz. Path message
+
