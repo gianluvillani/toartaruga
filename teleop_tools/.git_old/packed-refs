@@ -1,0 +1,17 @@
+# pack-refs with: peeled fully-peeled 
+3b7aab4a001aac0f14849deea59d595f5e1991b9 refs/remotes/origin/fuerte-devel
+fee47d7023ad1f73539c9cfdf455a8e698126340 refs/remotes/origin/hydro-devel
+659d63fe3d5c550efe7e0b321ddd037c86b44950 refs/remotes/origin/indigo-devel
+659d63fe3d5c550efe7e0b321ddd037c86b44950 refs/remotes/origin/melodic-devel
+72a56336d7fe424735bb91bbd0d1857a9a03ce88 refs/tags/0.1.0
+1e21c863d574b1ad00b0204ce40c78f4645733a6 refs/tags/0.1.1
+b129eea23756238728b198e6559b95ad00ba679d refs/tags/0.1.2
+ea2ce2b7b944954f22cf0a1a070c019dd5bc744e refs/tags/0.2.0
+9608ce3194d39fb48f1ab1eeb07c29e582cb837c refs/tags/0.2.1
+d25e44c7a20e2f36ff1c5494c622071351861a6a refs/tags/0.2.2
+2f95488aa3f3468fbac1d3953ea7965b00d4e626 refs/tags/0.2.3
+de65f628618251b4e43c1f402bf7cc409e3d7b80 refs/tags/0.2.4
+fd9c80ab3c125907e384bb0c8bfd192e05950e32 refs/tags/0.2.5
+659d63fe3d5c550efe7e0b321ddd037c86b44950 refs/tags/0.2.6
+5945fbd296b2e0261cc9292ed05b9f3332ca4eaf refs/tags/reem-sim-0.1
+d1ae0447ffd17a2fd8f725be99b3f5f12c784496 refs/tags/reemc-sim-0.1
