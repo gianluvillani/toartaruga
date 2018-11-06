@@ -51,7 +51,6 @@ Possible features to be implemented/modified:
 
 If you want to run the pure pursuit controller:   
 <code>
-  $ rosrun vehicle_simulation simulator.py   
-  $ rviz rviz
+  $ rosrun first_controller pure_pursuit.py   
 </code>
 
