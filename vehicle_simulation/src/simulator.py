@@ -18,9 +18,10 @@ class VehicleSimulation:
     """
     The vehicle class listens to the control and triggers the simulation
     """
-    def __init__(self, model):
+    def __init__(self, model, steering_map=None):
         # model created in the main file
         self.model = model
+	self.steering_map = steering_map
 
         # Needed for RViz visualization
         self.vehicle_frame_id = "base"
@@ -80,7 +81,7 @@ class VehicleSimulation:
     def update_odom(self, vehicle_state, current_time):
         """
         Updates the odometry, given the vehicle state
-        :param vehicle_state:
+        :param vehicle_state: Vehicle State
         :return:
         """
         self.odometry_sim.header.stamp = current_time
@@ -98,13 +99,21 @@ class VehicleSimulation:
 
 
 
+def steering_map(steering_input):
+	"""
+	Returns the steering map [-100, 100] -> steering angle (radiants)
+	:param steering_input: input to the steering in percentage 
+	:return delta: steering angle (radiants) 
+	"""
+	#TODO: Not implemented yet, needed asap
+	pass
+
+
 if __name__ == "__main__":
     car_1 = KinematicBicycle()
     rospy.init_node('car_simulation_node', anonymous=True)
     sim = VehicleSimulation(car_1)
     rospy.spin()
-
-
 
 
 

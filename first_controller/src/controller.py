@@ -107,7 +107,7 @@ def animate():
 
 
 
-#if __name__ == '__main__':
-	#animate()
+if __name__ == '__main__':
+	animate()
 
 
