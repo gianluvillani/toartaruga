@@ -49,4 +49,9 @@ Publishes to lli_ctrl_request topic.
 Possible features to be implemented/modified:
 - Adaptive Pure Pursuit
 
+If you want to run the pure pursuit controller:   
+<code>
+  $ rosrun vehicle_simulation simulator.py   
+  $ rviz rviz
+</code>
 
