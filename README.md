@@ -1,9 +1,13 @@
 # Toartaruga
 Group 2 code for SML Grand Challenge Project Course (KTH)
 
+
 ### Basic Instructions:
 - Clone the repo into your catkin_ws/src
 - Catkin_make into your repo
+
+## Current state:
+Everything working in simulation (Pure Pursuit). Testing soon in the SML on the real platform.
 
 ### Run the manual(teleop) controller
 Start roscore  
@@ -53,6 +57,4 @@ If you want to run the pure pursuit controller:
 <code>
   $ rosrun first_controller pure_pursuit.py   
 </code>
-
-The current system is working in the simulated environment. Testing soon in the SML on the real platform
 
