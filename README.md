@@ -33,7 +33,7 @@ If you want to simulate and visualize the vehicle as well
   $ rviz rviz
 </code>
 
-### Simulator package (Week 1 - Friday)
+### Simulator package (Week 0 - Friday)
 The simulator implements a simple kinematic bicycle model and a visualization in RViz. The discretized model used is taken from https://github.com/MPC-Berkeley/barc/wiki/Car-Model.
 The simulated states are computed as often as a new input is sent to the car. 
 Possible features to be implemented/modified:
@@ -41,7 +41,7 @@ Possible features to be implemented/modified:
 
 
 
-### Control package (Week 1 - Monday)
+### Control package (Week 1 - Tuesday)
 The controller implements a simple pure pursuit algorithm for steering angle computation. At the moment the input velocity is kept fixed. 
 Subscribes to Path, Odometry topics.
 Publishes to lli_ctrl_request topic.
@@ -53,4 +53,6 @@ If you want to run the pure pursuit controller:
 <code>
   $ rosrun first_controller pure_pursuit.py   
 </code>
+
+The current system is working in the simulated environment. Testing soon in the SML on the real platform
 
