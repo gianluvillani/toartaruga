@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 
-#import rospy
+import rospy
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 from nav_msgs.msg import Path, Odometry
 from low_level_interface.msg import lli_ctrl_request
 from tf.transformations import euler_from_quaternion 
-from control import controller
+from controller import controller
 
 class pure_pursuit(controller):
 	
@@ -41,18 +41,23 @@ class pure_pursuit(controller):
 		self.state_available = True
 
 	def parse_path(self, path_msg):
-		for pose in path_msg.poses:
-			self.cx = pose.pose.position.x
-			self.cy = pose.pose.position.y
+		# TODO: This fix is just to debug pure_pursuit, find a solution
+		if not self.path_available:				
+			self.cx = []
+			self.cy = []
+			for pose in path_msg.poses:
+				self.cx.append(pose.pose.position.x)
+				self.cy.append(pose.pose.position.y)
 		self.path_available = True
+		
 
 	def publish_control(self):
 		linear_vel = self.v
 		angular_vel = self.compute_control_signal()*(400/math.pi)
 		ctrl_request_msg = lli_ctrl_request()
-		ctrl_request_msg.velocity = linear_vel
-		ctrl_request_msg.steering = angular_vel
-		pub.publish(ctrl_request_msg)	
+		ctrl_request_msg.velocity = int(linear_vel)
+		ctrl_request_msg.steering = int(angular_vel)
+		self.pub_steer_control.publish(ctrl_request_msg)	
 
 	def calc_target_index(self):
 
@@ -60,6 +65,7 @@ class pure_pursuit(controller):
 	    dx = [self.x - icx for icx in self.cx]
 	    dy = [self.y - icy for icy in self.cy]
 	    d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+	    print len(d)
 	    ind = d.index(min(d))
 	    L = 0.0
 	    Lf = self.k * self.v + self.lf
@@ -92,17 +98,20 @@ class pure_pursuit(controller):
 	    Lf = self.k * self.v + self.lf
 
 	    delta = math.atan2(2.0 * self.l * math.sin(alpha) / self.lf, 1.0)
-
+	    if delta > math.pi/4:
+		delta = math.pi/4
+	    if delta < -math.pi/4:
+		delta = -math.pi/4
 	    return delta
 
 
 if __name__ == "__main__":
-    rospy.init_node('controller_node', anonymous=True)
-	rate = rospy.Rate(20)
+	rospy.init_node('Pure_pursuit_controller')
+	rate = rospy.Rate(100)
 	my_controller = pure_pursuit(l=0.35, lf = 0.20)
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.state_available:
-			self.publish_control()
+			my_controller.publish_control()
 			rate.sleep()
 
 
