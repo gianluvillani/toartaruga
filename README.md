@@ -2,12 +2,13 @@
 Group 2 code for SML Grand Challenge Project Course (KTH)
 
 
+## Current state:
+Everything working in simulation (Pure Pursuit). Testing soon in the SML on the real platform.
+
+
 ### Basic Instructions:
 - Clone the repo into your catkin_ws/src
 - Catkin_make into your repo
-
-## Current state:
-Everything working in simulation (Pure Pursuit). Testing soon in the SML on the real platform.
 
 ### Run the manual(teleop) controller
 Start roscore  
