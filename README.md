@@ -3,7 +3,7 @@ Group 2 code for SML Grand Challenge Project Course (KTH)
 
 
 ## Current state:
-Everything working in simulation (Pure Pursuit). Testing soon in the SML on the real platform.
+Everything working in simulation (Pure Pursuit). Tested in SML on the real platform. Working decently.
 
 
 ### Basic Instructions:
