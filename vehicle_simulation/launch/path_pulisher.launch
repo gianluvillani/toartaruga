@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="vehicle_simulation" type="path_publisher.py" name="path_publisher" >
+  </node>
+
+  
+</launch>

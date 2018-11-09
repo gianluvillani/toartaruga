@@ -24,13 +24,16 @@ def parse_path_file(filepath = '/home/nvidia/catkin_ws/src/vehicle_simulation/sr
 	
 def coordinates_to_msg(cx, cy):
 	path_msg = Path()
+	z_init = 0
 	for x, y in zip(cx, cy):
 		pose = PoseStamped()
-		pose.header.frame_id = 'odom'
-		pose.pose.position.x = x
-		pose.pose.position.y = y	
+		pose.header.frame_id = 'qualisys'
+		pose.pose.position.x = x*2+2
+		pose.pose.position.y = y*2
+		pose.pose.position.z = z_init
+		z_init+=0.001	
 		path_msg.poses.append(pose)
-	path_msg.header.frame_id = 'odom'
+	path_msg.header.frame_id = 'qualisys'
 	return path_msg
 
 if __name__ == "__main__":

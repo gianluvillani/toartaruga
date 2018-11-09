@@ -53,16 +53,17 @@ class pure_pursuit(controller):
                 
 	def save_path(self, path_msg):
 		self.path = path_msg
-		self.path_available = True
+
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
-		print "PATH PUBLISHED"				
-		self.cx = []
-		self.cy = []
-		for pose in path_msg.poses:
-			self.cx.append(pose.pose.position.x)
-			self.cy.append(pose.pose.position.y)
-		
+		print "PATH PUBLISHED"
+		if not self.path_available:				
+			self.cx = []
+			self.cy = []
+			for pose in path_msg.poses:
+				self.cx.append(pose.pose.position.x)
+				self.cy.append(pose.pose.position.y)
+		self.path_available = True
 		
 
 	def publish_control(self):
@@ -87,7 +88,7 @@ class pure_pursuit(controller):
 	    	Lf = self.k * self.v + self.lf
 
 	    	# search look ahead target point index
-	    	while Lf > L and (ind + 1) < len(self.cx):
+	    	while Lf > L:#and (ind + 1) < len(self.cx):
 	        	dx = self.cx[ind + 1] - self.cx[ind]
 	        	dy = self.cx[ind + 1] - self.cx[ind]
 	        	L += math.sqrt(dx ** 2 + dy ** 2)
@@ -95,15 +96,13 @@ class pure_pursuit(controller):
 			print("lol")
 			print(ind)
 			if ind>=len(self.cx)-1:
-				print('inside if')
-				print(ind)
 				ind = 0
 			print(ind) 
 	    return ind
 
 	def compute_control_signal(self):
-	    
-	    self.parse_path(self.path)
+	   
+ self.parse_path(self.path)
 	    ind = self.calc_target_index()
 	    if ind ==None:
 		return 0
@@ -132,10 +131,10 @@ class pure_pursuit(controller):
 
 if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
-	rate = rospy.Rate(50)
-	my_controller = pure_pursuit(l=0.32, lf = 0.22, v=15)
+	rate = rospy.Rate(80)
+	my_controller = pure_pursuit(l=0.35, lf = 0.1, v=15)
 	while not rospy.is_shutdown():
-		if my_controller.state_available and my_controller.path_available:
+		if my_controller.state_available and my_controller.state_available:
 			my_controller.publish_control()
 			rate.sleep()
 

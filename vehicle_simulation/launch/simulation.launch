@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="vehicle_simulation" type="simulator.py" name="simulator" >
+  </node>
+
+ <!-- <node pkg="rviz" type="rviz" name="rviz"/> -->
+
+</launch>
