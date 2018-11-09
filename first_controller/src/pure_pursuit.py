@@ -133,7 +133,7 @@ class pure_pursuit(controller):
 if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
 	rate = rospy.Rate(50)
-	my_controller = pure_pursuit(l=0.32, lf = 0.22, v=15)
+	my_controller = pure_pursuit(l=0.32, lf = 0.22, v=20)
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:
 			my_controller.publish_control()
