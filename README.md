@@ -1,6 +1,11 @@
 # Toartaruga
 Group 2 code for SML Grand Challenge Project Course (KTH)
 
+
+## Current state:
+Everything working in simulation (Pure Pursuit). Tested in SML on the real platform. Working decently.
+
+
 ### Basic Instructions:
 - Clone the repo into your catkin_ws/src
 - Catkin_make into your repo
@@ -30,13 +35,36 @@ Translate message from Twist to lli_ctrl_request:
 If you want to simulate and visualize the vehicle as well   
 <code>
   $ rosrun vehicle_simulation simulator.py   
+  
   $ rviz rviz
 </code>
 
-### Simulator Structure (Gianluca - Week 1)
+### Simulator package (Week 0 - Friday)
 The simulator implements a simple kinematic bicycle model and a visualization in RViz. The discretized model used is taken from https://github.com/MPC-Berkeley/barc/wiki/Car-Model.
 The simulated states are computed as often as a new input is sent to the car. 
 Possible features to be implemented/modified:
 - Control should not be necessarily 'synchronized' with the simulation. More explanation later
-- Path publishing and visualization in RViz. Path message
+
+
+### Control package (Week 1 - Tuesday)
+The controller implements a simple pure pursuit algorithm for steering angle computation. At the moment the input velocity is kept fixed. 
+Subscribes to Path, Odometry topics.
+Publishes to lli_ctrl_request topic.
+
+If you want to run the pure pursuit controller:   
+<code>
+  $ rosrun first_controller pure_pursuit.py   
+</code>
+
+### Pure Pursuit validation + Launch files (Week 1 - Wednesday)
+The pure pursuit controller works both in simulation and real world. Reference path, circle with 1m radius. 
+Possible improvements:
+- Decrease oscillations (Low pass filter/Adaptive pp/Something else)
+- Change parameters on the go with keyboard. (Path/Control parameters)
+- Record data (e.g. Average deviation, steering angle history, speed history)
+
+To run complete autonomous path following   
+<code>
+  $ roslaunch   
+</code>
 
