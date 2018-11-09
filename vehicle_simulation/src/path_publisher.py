@@ -28,8 +28,8 @@ def coordinates_to_msg(cx, cy):
 	for x, y in zip(cx, cy):
 		pose = PoseStamped()
 		pose.header.frame_id = 'qualisys'
-		pose.pose.position.x = x*2+2
-		pose.pose.position.y = y*2
+		pose.pose.position.x = x
+		pose.pose.position.y = y
 		pose.pose.position.z = z_init
 		z_init+=0.001	
 		path_msg.poses.append(pose)
