@@ -11,7 +11,7 @@ from geometry_msgs.msg import PoseStamped
 
 
 
-def parse_path_file(filepath = '/home/nvidia/catkin_ws/src/vehicle_simulation/src/figure_eight_small.txt'):
+def parse_path_file(filepath = '/home/nvidia/catkin_ws/src/vehicle_simulation/src/figure_eight.txt'):
 	print filepath
 	cx = []
 	cy = []
