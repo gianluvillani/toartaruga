@@ -4,6 +4,8 @@ import rospy
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
+import os
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
 from low_level_interface.msg import lli_ctrl_request
@@ -18,6 +20,7 @@ class pure_pursuit(controller):
 		v is the velocity.
 		k is a parameter that regulates how much the look-ahead distance changes with the speed.
 		"""
+		self.start_steering = 0
 		self.lf = lf
 		self.l = l
 		self.v = v
@@ -26,10 +29,11 @@ class pure_pursuit(controller):
 		self.path_available = False
 		self.cx = []
 		self.cy = []
+		self.starting_time=rospy.get_time()
 		#Publishers/Subscribers
 		self.pub_steer_control = rospy.Publisher('/lli/ctrl_request', lli_ctrl_request)
 		#self.sub_odom = rospy.Subscriber('/SVEA2/odom', Odometry, self.parse_state)
-		self.sub_pose = rospy.Subscriber('/SVEA2/pose', PoseStamped, self.parse_state)
+		self.sub_pose = rospy.Subscriber('/SVEA2/pose', PoseStamped, self.save_state)
 		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.save_path)
 
 	def parse_state(self, odom_msg):
@@ -50,10 +54,15 @@ class pure_pursuit(controller):
                 orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
                 self.yaw = euler_from_quaternion(orientation_list)[2]
                 self.state_available = True
-                
+        
+	def save_state(self, odom_msg):
+		self.odom = odom_msg
+		self.state_available = True
+        
 	def save_path(self, path_msg):
 		self.path = path_msg
 		self.path_available = True
+
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
 		print "PATH PUBLISHED"				
@@ -63,16 +72,21 @@ class pure_pursuit(controller):
 			self.cx.append(pose.pose.position.x)
 			self.cy.append(pose.pose.position.y)
 		
-		
-
 	def publish_control(self):
 		linear_vel = self.v
-		angular_vel = self.compute_control_signal()*(400/math.pi)
+		control_signal = self.compute_control_signal()
+		angular_vel = control_signal[0]*(400/math.pi)*0.2+0.8*self.start_steering
+		self.start_steering = angular_vel
 		ctrl_request_msg = lli_ctrl_request()
 		ctrl_request_msg.velocity = int(linear_vel)
 		ctrl_request_msg.steering = int(angular_vel)
-		self.pub_steer_control.publish(ctrl_request_msg)	
-
+		self.pub_steer_control.publish(ctrl_request_msg)
+		self.save_data(control_signal[1], control_signal[0], linear_vel)	
+	
+	def save_data(self, index, delta, velocity):
+		out_file = open('/home/nvidia/catkin_ws/src/first_controller/data_figure_eight_l_35_f_95.txt',"a")	
+		out_file.write(str(index)+', '+ str(delta)+', '+ str(velocity)+', '+ str(rospy.get_time()-self.starting_time)+ '\n' )
+		out_file.close()
 	def calc_target_index(self):
 	    
 	    ind = None
@@ -92,18 +106,16 @@ class pure_pursuit(controller):
 	        	dy = self.cx[ind + 1] - self.cx[ind]
 	        	L += math.sqrt(dx ** 2 + dy ** 2)
 	        	ind +=1	
-			print("lol")
-			print(ind)
 			if ind>=len(self.cx)-1:
 				print('inside if')
 				print(ind)
 				ind = 0
-			print(ind) 
 	    return ind
 
 	def compute_control_signal(self):
 	    
 	    self.parse_path(self.path)
+	    self.parse_state(self.odom)
 	    ind = self.calc_target_index()
 	    if ind ==None:
 		return 0
@@ -122,18 +134,18 @@ class pure_pursuit(controller):
 
 	    Lf = self.k * self.v + self.lf
 
-	    delta = math.atan2(2.0 * self.l * math.sin(alpha) / self.lf, 1.0)
+	    delta = math.atan2(2.0 * self.l * math.sin(alpha) / Lf, 1.0)
 	    if delta > math.pi/4:
 		delta = math.pi/4
 	    if delta < -math.pi/4:
 		delta = -math.pi/4
-	    return delta
+	    return delta, ind
 
 
 if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
-	rate = rospy.Rate(50)
-	my_controller = pure_pursuit(l=0.32, lf = 0.22, v=20)
+	rate = rospy.Rate(80)
+	my_controller = pure_pursuit(l=0.33, lf = 0.45, v=50)
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:
 			my_controller.publish_control()
