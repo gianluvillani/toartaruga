@@ -72,7 +72,7 @@ To run complete autonomous path following
 The obstacle_detector package https://github.com/tysik/obstacle_detector is used to detect obstacles. The detected obstacles are published as circles and segments. For further information check the documentation at the repository above. 
 We also implemented a simple transform broadcaster in order to place the obstacles in the global frame qualisys. (Check transform_broadcaster.py in transform_broadcaster package).
 If you want to visualize the obstacles on your own computer, be sure to install the obstacle_detector as well.
-To run complete autonomous path following with obstacle detection  
+To run complete autonomous path following with obstacle detection  follow the commands listed below.
 
 Initialize the car and comunication with qualisys               
 <code>
@@ -94,4 +94,5 @@ Launch the obstacle detector
     $ roslaunch obstacle_detector nodes.launch
 </code>
 
-Launch rviz ;)
+Launch rviz on your local computer;)
+OBS. If you want to visualize obstacles on your laptop be sure to correctly build the obstacle_detector package.
