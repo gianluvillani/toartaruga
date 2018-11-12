@@ -75,21 +75,25 @@ If you want to visualize the obstacles on your own computer, be sure to install 
 To run complete autonomous path following with obstacle detection  
 
 Initialize the car and comunication with qualisys
+
 <code>
     $ roslaunch monitor main.launch 
 </code>
 
 Start the lidar
+
 <code>
     $ roslaunch rplidar rpplidar.launch
 </code>
 
 Run the transformation broadcaster
+
 <code>
     $ rosrun transform_broadcaster transform_broadcaster.py 
 </code>
 
 Launch the obstacle detector
+
 <code>
     $ roslaunch obstacle_detector nodes.launch
 </code>
