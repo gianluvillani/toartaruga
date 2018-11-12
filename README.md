@@ -3,7 +3,7 @@ Group 2 code for SML Grand Challenge Project Course (KTH)
 
 
 ## Current state:
-Everything working in simulation (Pure Pursuit). Tested in SML on the real platform. Working decently.
+Everything working in simulation (Pure Pursuit). Tested in SML on the real platform. Obstacle detection implemented.
 
 
 ### Basic Instructions:
@@ -59,9 +59,9 @@ If you want to run the pure pursuit controller:
 ### Pure Pursuit validation + Launch files (Week 1 - Wednesday)
 The pure pursuit controller works both in simulation and real world. Reference path, circle with 1m radius. 
 Possible improvements:
-- Decrease oscillations (Low pass filter/Adaptive pp/Something else)
+- Decrease oscillations (Low pass filter/Adaptive pp/Something else). DONE
 - Change parameters on the go with keyboard. (Path/Control parameters)
-- Record data (e.g. Average deviation, steering angle history, speed history)
+- Record data (e.g. Average deviation, steering angle history, speed history). ALMOST DONE. IMPROVEMENT ON THE GO
 
 To run complete autonomous path following   
 <code>
