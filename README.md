@@ -81,7 +81,7 @@ Initialize the car and comunication with qualisys
 
 Start the lidar                     
 <code>
-    $ roslaunch rplidar rplidar.launch
+    $ roslaunch rplidar_ros rplidar.launch
 </code>
 
 Run the transformation broadcaster            
