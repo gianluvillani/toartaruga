@@ -79,7 +79,7 @@ Initialize the car and comunication with qualisys
     $ roslaunch monitor main.launch 
 </code>
 
-Start the lidar 
+Start the lidar         
 <code>
     $ roslaunch rplidar rpplidar.launch
 </code>
