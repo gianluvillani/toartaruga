@@ -76,22 +76,22 @@ To run complete autonomous path following with obstacle detection
 
 Initialize the car and comunication with qualisys
 <code>
-  $ roslaunch monitor main.launch 
+    $ roslaunch monitor main.launch 
 </code>
 
 Start the lidar
 <code>
-  $ roslaunch rplidar rpplidar.launch
+    $ roslaunch rplidar rpplidar.launch
 </code>
 
 Run the transformation broadcaster
 <code>
-  $ rosrun transform_broadcaster transform_broadcaster.py 
+    $ rosrun transform_broadcaster transform_broadcaster.py 
 </code>
 
 Launch the obstacle detector
 <code>
-  $ roslaunch obstacle_detector nodes.launch
+    $ roslaunch obstacle_detector nodes.launch
 </code>
 
 Launch rviz ;)
