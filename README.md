@@ -65,6 +65,33 @@ Possible improvements:
 
 To run complete autonomous path following   
 <code>
-  $ roslaunch   
+  $ roslaunch monitor main.launch 
 </code>
 
+### Obstacle detection (Week 2 - Sunday)
+The obstacle_detector package https://github.com/tysik/obstacle_detector is used to detect obstacles. The detected obstacles are published as circles and segments. For further information check the documentation at the repository above. 
+We also implemented a simple transform broadcaster in order to place the obstacles in the global frame qualisys. (Check transform_broadcaster.py in transform_broadcaster package).
+If you want to visualize the obstacles on your own computer, be sure to install the obstacle_detector as well.
+To run complete autonomous path following with obstacle detection  
+
+Initialize the car and comunication with qualisys
+<code>
+  $ roslaunch monitor main.launch 
+</code>
+
+Start the lidar
+<code>
+  $ roslaunch rplidar rpplidar.launch
+</code>
+
+Run the transformation broadcaster
+<code>
+  $ rosrun transform_broadcaster transform_broadcaster.py 
+</code>
+
+Launch the obstacle detector
+<code>
+  $ roslaunch obstacle_detector nodes.launch
+</code>
+
+Launch rviz ;)
