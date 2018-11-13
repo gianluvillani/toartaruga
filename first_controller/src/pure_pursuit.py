@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import os
+import time
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
 from low_level_interface.msg import lli_ctrl_request
@@ -30,21 +31,22 @@ class pure_pursuit(controller):
 		self.cx = []
 		self.cy = []
 		self.starting_time=rospy.get_time()
-		self.TRACKING = False
+		self.TRACKING = True
+		self.last_nearest_index = 0
 
 		# Wait for services
 		
 
 		# Publishers/Subscribers
 		self.pub_steer_control = rospy.Publisher('/lli/ctrl_request', lli_ctrl_request)
-		self.sub_pose = rospy.Subscriber('/SVEA2/pose', PoseStamped, self.save_state)
+		self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
 		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.save_path)
 
 	def parse_state(self, odom_msg):
-		print "STATE RECEIVED!"
-                self.x = odom_msg.pose.position.x
-                self.y = odom_msg.pose.position.y
-                orientation_q = odom_msg.pose.orientation
+		#print "STATE RECEIVED!"
+                self.x = odom_msg.pose.pose.position.x
+                self.y = odom_msg.pose.pose.position.y
+                orientation_q = odom_msg.pose.pose.orientation
                 orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
                 self.yaw = euler_from_quaternion(orientation_list)[2]
                 self.state_available = True
@@ -59,7 +61,7 @@ class pure_pursuit(controller):
 
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
-		print "PATH PUBLISHED"				
+		#print "PATH PUBLISHED"				
 		self.cx = []
 		self.cy = []
 		for pose in path_msg.poses:
@@ -67,14 +69,14 @@ class pure_pursuit(controller):
 			self.cy.append(pose.pose.position.y)
 		
 	def publish_control(self, steering_degree, target_ind, velocity):
-		linear_control = velocity*10	#check the map to vel
+		linear_control = velocity	#check the map to vel
 		angular_control = steering_degree*(400/math.pi)*0.2+0.8*self.start_steering
 		self.start_steering = angular_control
 		ctrl_request_msg = lli_ctrl_request()
 		ctrl_request_msg.velocity = int(linear_control)
 		ctrl_request_msg.steering = int(angular_control)
 		self.pub_steer_control.publish(ctrl_request_msg)
-		self.save_data(target_ind, steering_degree, linear_control)	
+		#self.save_data(target_ind, steering_degree, linear_control)	
 	
 	def save_data(self, index, delta, velocity):
 		out_file = open('/home/nvidia/catkin_ws/src/first_controller/data_figure_eight_l_35_f_95.txt',"a")	
@@ -88,8 +90,17 @@ class pure_pursuit(controller):
 	    if len(self.cx)!=0:
 	    	dx = [self.x - icx for icx in self.cx]
 	    	dy = [self.y - icy for icy in self.cy]
+		print(len(self.cx))
 	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+
+
+
+		#new_d = d[self.last_nearest_index:self.last_nearest_index + len(self.cx)//10]
 	    	ind = d.index(min(d))
+
+		#
+		self.last_nearest_index = ind
+		#		
 	    	L = 0.0
 	    	Lf = self.k * self.v + self.lf
 
@@ -107,7 +118,8 @@ class pure_pursuit(controller):
 
 	    if ind ==None:
 		return 0
-
+	    tx = self.cx[ind]
+	    ty = self.cy[ind]
 	    alpha = math.atan2(ty - self.y, tx - self.x) - self.yaw
 
 	    if self.v < 0:  # back
@@ -129,19 +141,25 @@ class pure_pursuit(controller):
 if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
 	rate = rospy.Rate(80)
-	my_controller = pure_pursuit(l=0.33, lf = 0.45, v=0)
+	my_controller = pure_pursuit(l=0.9, lf = 0.45, v=15)
+	
 	while not rospy.is_shutdown():
+		time_start = time.clock()
 		if my_controller.state_available and my_controller.path_available:   
-	  		self.parse_path(self.path)
-	    		self.parse_state(self.odom)
-			if self.TRACKING:
-		    		ind = self.calc_target_index()
-				delta = self.compute_delta(ind)
-				v = self.compute_velocity(delta)
+	  		my_controller.parse_path(my_controller.path)
+	    		my_controller.parse_state(my_controller.odom)
+			if my_controller.TRACKING:
+				
+		    		ind = my_controller.calc_target_index()
+				delta = my_controller.compute_delta(ind)
+				
+				v = my_controller.compute_velocity(delta)
 				my_controller.publish_control(delta, ind, v)
 			else:
 				my_controller.publish_control(0, 0, 0)
+			print time.clock() - time_start
 			rate.sleep()
+
 
 
 
