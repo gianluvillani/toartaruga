@@ -33,6 +33,7 @@ class pure_pursuit(controller):
 		self.starting_time=rospy.get_time()
 		self.TRACKING = True
 		self.last_nearest_index = 0
+		self.counter = 0
 
 		# Wait for services
 		
@@ -90,17 +91,31 @@ class pure_pursuit(controller):
 	    if len(self.cx)!=0:
 	    	dx = [self.x - icx for icx in self.cx]
 	    	dy = [self.y - icy for icy in self.cy]
-		print(len(self.cx))
 	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
 
+		
 
+		if self.counter < 5:
+			new_ind = d.index(min(d))
+			self.counter += 1
+			self.last_nearest_index
+			print(self.last_nearest_index)
+		else:
+			new_d = d[self.last_nearest_index:self.last_nearest_index + len(self.cx)//5]
+			
+			extra = d[:len(self.cx)//5 - len(new_d)]
+			new_d.extend(extra)
+			new_ind = new_d.index(min(new_d))
+			if len(extra) > 0:
+				self.last_nearest_index = len(extra)-1
+			else:
+				self.last_nearest_index = new_ind
 
-		#new_d = d[self.last_nearest_index:self.last_nearest_index + len(self.cx)//10]
 	    	ind = d.index(min(d))
+		
+		#ind = new_ind
 
-		#
-		self.last_nearest_index = ind
-		#		
+		
 	    	L = 0.0
 	    	Lf = self.k * self.v + self.lf
 
@@ -141,10 +156,9 @@ class pure_pursuit(controller):
 if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
 	rate = rospy.Rate(80)
-	my_controller = pure_pursuit(l=0.9, lf = 0.45, v=15)
+	my_controller = pure_pursuit(l=0.2, lf = 0.03, v=20)
 	
 	while not rospy.is_shutdown():
-		time_start = time.clock()
 		if my_controller.state_available and my_controller.path_available:   
 	  		my_controller.parse_path(my_controller.path)
 	    		my_controller.parse_state(my_controller.odom)
@@ -157,7 +171,6 @@ if __name__ == "__main__":
 				my_controller.publish_control(delta, ind, v)
 			else:
 				my_controller.publish_control(0, 0, 0)
-			print time.clock() - time_start
 			rate.sleep()
 
 
