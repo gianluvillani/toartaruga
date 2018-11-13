@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import csv
 import os
 import time
+from std_srvs import Empty
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
 from low_level_interface.msg import lli_ctrl_request
@@ -42,7 +43,15 @@ class pure_pursuit(controller):
 		self.pub_steer_control = rospy.Publisher('/lli/ctrl_request', lli_ctrl_request)
 		self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
 		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.save_path)
-
+		self.stop_srv = rospy.Service('/Stop_pure_pursuit', Empty, self.stop)
+		self.start_srv = rospy.Service('/Start_pure_pursuit', Empty, self.start)
+		
+	def stop(self):
+		self.TRACKING = False
+	
+	def start(self):
+		self.TRACKING = True
+		
 	def parse_state(self, odom_msg):
 		#print "STATE RECEIVED!"
                 self.x = odom_msg.pose.pose.position.x
