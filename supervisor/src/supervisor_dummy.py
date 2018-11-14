@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-
+from nav_msgs.msg import Path
 
 def idle_tn(path_available = False):
     if path_available:
@@ -34,11 +34,16 @@ class StateMachine:
         # Initialize services
         rospy.wait_for_service("/Start_pure_pursuit")
         rospy.wait_for_service("/Stop_pure_pursuit")
-        self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)'
+        self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
+        self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.update_path)
+
         self.danger = 1
         
     def udpdate_danger(self, danger):
         self.danger = danger.data
+        
+    def udpdate_path(self, danger):
+        self.path_available = True
 
     def advance_machine(self):
         args = {'danger': self.danger, 'path_available':self.path_available}
