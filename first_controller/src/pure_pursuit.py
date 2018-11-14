@@ -6,11 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import os
+import time
+from std_srvs.srv import Empty
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
 from low_level_interface.msg import lli_ctrl_request
 from tf.transformations import euler_from_quaternion 
 from controller import controller
+from std_msgs.msg import Float32
 
 class pure_pursuit(controller):
 	
@@ -31,20 +34,41 @@ class pure_pursuit(controller):
 		self.cy = []
 		self.starting_time=rospy.get_time()
 		self.TRACKING = True
+		self.last_nearest_index = 0
+		self.counter = 0
 
 		# Wait for services
 		
 
 		# Publishers/Subscribers
 		self.pub_steer_control = rospy.Publisher('/lli/ctrl_request', lli_ctrl_request)
+		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
 		self.sub_pose = rospy.Subscriber('/SVEA2/pose', PoseStamped, self.save_state)
 		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.save_path)
-
+		#self.stop_srv = rospy.Service('/Stop_pure_pursuit', Empty, self.stop)
+		#self.start_srv = rospy.Service('/Start_pure_pursuit', Empty, self.start)
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
+		
+	def stop(self):
+		self.TRACKING = False
+	
+	def start(self):
+		self.TRACKING = True
+	
+	def update_danger(self, danger_msg):
+		if danger_msg.data > 0.5:
+			self.TRACKING = False
+		else:
+			self.TRACKING = True
+		
 	def parse_state(self, odom_msg):
-		print "STATE RECEIVED!"
-                self.x = odom_msg.pose.position.x
+		#print "STATE RECEIVED!"
+                #self.x = odom_msg.pose.pose.position.x
+                #self.y = odom_msg.pose.pose.position.y
+		self.x = odom_msg.pose.position.x
                 self.y = odom_msg.pose.position.y
-                orientation_q = odom_msg.pose.orientation
+                #orientation_q = odom_msg.pose.pose.orientation
+		orientation_q = odom_msg.pose.orientation
                 orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
                 self.yaw = euler_from_quaternion(orientation_list)[2]
                 self.state_available = True
@@ -59,7 +83,7 @@ class pure_pursuit(controller):
 
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
-		print "PATH PUBLISHED"				
+		#print "PATH PUBLISHED"				
 		self.cx = []
 		self.cy = []
 		for pose in path_msg.poses:
@@ -74,7 +98,7 @@ class pure_pursuit(controller):
 		ctrl_request_msg.velocity = int(linear_control)
 		ctrl_request_msg.steering = int(angular_control)
 		self.pub_steer_control.publish(ctrl_request_msg)
-		self.save_data(target_ind, steering_degree, linear_control)	
+		#self.save_data(target_ind, steering_degree, linear_control)	
 	
 	def save_data(self, index, delta, velocity):
 		out_file = open('/home/nvidia/catkin_ws/src/first_controller/data_figure_eight_l_35_f_95.txt',"a")	
@@ -89,7 +113,30 @@ class pure_pursuit(controller):
 	    	dx = [self.x - icx for icx in self.cx]
 	    	dy = [self.y - icy for icy in self.cy]
 	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+
+		
+
+		if self.counter < 5:
+			new_ind = d.index(min(d))
+			self.counter += 1
+			self.last_nearest_index
+			print(self.last_nearest_index)
+		else:
+			new_d = d[self.last_nearest_index:self.last_nearest_index + len(self.cx)//5]
+			
+			extra = d[:len(self.cx)//5 - len(new_d)]
+			new_d.extend(extra)
+			new_ind = new_d.index(min(new_d))
+			if len(extra) > 0:
+				self.last_nearest_index = len(extra)-1
+			else:
+				self.last_nearest_index = new_ind
+
 	    	ind = d.index(min(d))
+		
+		#ind = new_ind
+
+		
 	    	L = 0.0
 	    	Lf = self.k * self.v + self.lf
 
@@ -108,7 +155,7 @@ class pure_pursuit(controller):
 	    if ind ==None:
 		return 0
 	    tx = self.cx[ind]
-            ty = self.cy[ind]
+	    ty = self.cy[ind]
 	    alpha = math.atan2(ty - self.y, tx - self.x) - self.yaw
 
 	    if self.v < 0:  # back
@@ -130,30 +177,19 @@ class pure_pursuit(controller):
 if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
 	rate = rospy.Rate(80)
-	my_controller = pure_pursuit(l=0.33, lf = 0.45, v=20)
+	my_controller = pure_pursuit(l=0.2, lf = 0.35, v=20)
+	
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:   
 	  		my_controller.parse_path(my_controller.path)
 	    		my_controller.parse_state(my_controller.odom)
 			if my_controller.TRACKING:
+				
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
+				
 				v = my_controller.compute_velocity(delta)
 				my_controller.publish_control(delta, ind, v)
 			else:
 				my_controller.publish_control(0, 0, 0)
 			rate.sleep()
-
-
-
-
-
-	
-
-
-
-
-
-
-
-		
