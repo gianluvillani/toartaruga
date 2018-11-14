@@ -51,6 +51,7 @@ class StateRunning(smach.State):
 		self.danger = 0.0
 		self.threshold = 0.8
 		self.sleep_time = 0.1
+		#service call: Start tracking
 
 
 	def execute(self, ud):
@@ -76,6 +77,7 @@ class StateStopped(smach.State):
 		self.danger = 0.0
 		self.threshold = 0.5
 		self.sleep_time = 0.1
+		# service call: stop tracking
 
 	def execute(self, ud):
 		while True:
