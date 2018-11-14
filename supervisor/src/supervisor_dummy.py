@@ -34,6 +34,11 @@ class StateMachine:
         # Initialize services
         rospy.wait_for_service("/Start_pure_pursuit")
         rospy.wait_for_service("/Stop_pure_pursuit")
+        self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)'
+        self.danger = 1
+        
+    def udpdate_danger(self, danger):
+        self.danger = danger.data
 
     def advance_machine(self):
         args = {'danger': self.danger, 'path_available':self.path_available}
