@@ -6,6 +6,7 @@ import smach_ros
 from std_msgs.msg import Float32
 from nav_msgs.msg import Path
 import threading
+from std_srvs.srv import Empty
 
 class StateIdle(smach.State):
 
@@ -34,7 +35,7 @@ class StateIdle(smach.State):
 
 	def path_callback(self, msg):
 		self.mutex.acquire()
-		self.path = msg
+		self.path = True
 		self.mutex.release()
 
 	def danger_callback(self, msg):
@@ -55,6 +56,8 @@ class StateRunning(smach.State):
 
 
 	def execute(self, ud):
+		pure_pursuit_srv_start = rospy.ServiceProxy("/Start_pure_pursuit", Empty)
+		pure_pursuit_srv_start()
 		while True:
 			self.mutex.acquire()
 			if self.danger > self.threshold:
@@ -80,6 +83,8 @@ class StateStopped(smach.State):
 		# service call: stop tracking
 
 	def execute(self, ud):
+		pure_pursuit_srv_stop = rospy.ServiceProxy("/Stop_pure_pursuit", Empty)
+		pure_pursuit_srv_stop()
 		while True:
 			self.mutex.acquire()
 			if self.danger < self.threshold:
@@ -95,6 +100,10 @@ class StateStopped(smach.State):
 
 if __name__ == "__main__":
 	rospy.init_node('supervisor', anonymous=True)
+
+	rospy.wait_for_service("/Start_pure_pursuit")
+	rospy.wait_for_service("/Stop_pure_pursuit")
+
 	sm = smach.StateMachine(outcomes=[])
 	with sm:
 		smach.StateMachine.add('StateIdle', StateIdle(),

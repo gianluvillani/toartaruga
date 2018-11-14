@@ -2,19 +2,19 @@
 import rospy
 from nav_msgs.msg import Path
 
-def idle_tn(danger=0, path_available = False):
+def idle_tn(danger=0, path_available = False, danger_threshold=0.5):
     if path_available:
         return 'RUN'
     else:
         return 'IDLE'
 
-def run_tn(path_available = False, danger = 0):
+def run_tn(path_available = False, danger = 0, danger_threshold=0.5):
     if path_available and danger < danger_value:
         return 'RUN'
     else:
         return 'STOP'
 
-def stop_tn(path_available = False, danger = 0):
+def stop_tn(path_available = False, danger = 0, danger_threshold=0.5):
     if path_available and danger < danger_value:
         return 'RUN'
     else:
@@ -55,12 +55,12 @@ class StateMachine:
         if self.state == 'RUN':
             # request Start service
             pure_pursuit_srv_start = rospy.ServiceProxy("/Start_pure_pursuit", Empty)
-            pure_pursuit_srv()
+            pure_pursuit_srv_start()
 
         if self.state == 'STOP':
             # request Stop service
             pure_pursuit_srv_stop = rospy.ServiceProxy("/Stop_pure_pursuit", Empty)
-            pure_pursuit_srv()
+            pure_pursuit_srv_stop()
 
 if __name__ == "__main__":
     rospy.init_node('supervisor', anonymous=True)
