@@ -2,7 +2,7 @@
 import rospy
 from nav_msgs.msg import Path
 
-def idle_tn(path_available = False):
+def idle_tn(danger=0, path_available = False):
     if path_available:
         return 'RUN'
     else:
