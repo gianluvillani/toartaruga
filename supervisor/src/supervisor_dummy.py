@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-danger_value = 0.5
+
 
 def idle_tn(path_available = False):
     if path_available:
