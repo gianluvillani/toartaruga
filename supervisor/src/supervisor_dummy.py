@@ -24,7 +24,6 @@ def stop_tn(path_available = False, danger = 0):
 # Service needed:
 #    - Start pure_pursuit
 #    - Stop  pure_pursuit
-#
 
 
 class StateMachine:
@@ -45,12 +44,12 @@ class StateMachine:
             pass
         if self.state == 'RUN':
             # request Start service
-            pure_pursuit_srv = rospy.ServiceProxy("/Start_pure_pursuit", Empty)
+            pure_pursuit_srv_start = rospy.ServiceProxy("/Start_pure_pursuit", Empty)
             pure_pursuit_srv()
 
         if self.state == 'STOP':
             # request Stop service
-            pure_pursuit_srv = rospy.ServiceProxy("/Stop_pure_pursuit", Empty)
+            pure_pursuit_srv_stop = rospy.ServiceProxy("/Stop_pure_pursuit", Empty)
             pure_pursuit_srv()
 
 if __name__ == "__main__":
