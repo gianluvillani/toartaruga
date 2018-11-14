@@ -30,7 +30,7 @@ class pure_pursuit(controller):
 		self.cx = []
 		self.cy = []
 		self.starting_time=rospy.get_time()
-		self.TRACKING = False
+		self.TRACKING = True
 
 		# Wait for services
 		
@@ -67,7 +67,7 @@ class pure_pursuit(controller):
 			self.cy.append(pose.pose.position.y)
 		
 	def publish_control(self, steering_degree, target_ind, velocity):
-		linear_control = velocity*10	#check the map to vel
+		linear_control = velocity	#check the map to vel
 		angular_control = steering_degree*(400/math.pi)*0.2+0.8*self.start_steering
 		self.start_steering = angular_control
 		ctrl_request_msg = lli_ctrl_request()
@@ -107,7 +107,8 @@ class pure_pursuit(controller):
 
 	    if ind ==None:
 		return 0
-
+	    tx = self.cx[ind]
+            ty = self.cy[ind]
 	    alpha = math.atan2(ty - self.y, tx - self.x) - self.yaw
 
 	    if self.v < 0:  # back
@@ -129,15 +130,15 @@ class pure_pursuit(controller):
 if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
 	rate = rospy.Rate(80)
-	my_controller = pure_pursuit(l=0.33, lf = 0.45, v=0)
+	my_controller = pure_pursuit(l=0.33, lf = 0.45, v=20)
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:   
-	  		self.parse_path(self.path)
-	    		self.parse_state(self.odom)
-			if self.TRACKING:
-		    		ind = self.calc_target_index()
-				delta = self.compute_delta(ind)
-				v = self.compute_velocity(delta)
+	  		my_controller.parse_path(my_controller.path)
+	    		my_controller.parse_state(my_controller.odom)
+			if my_controller.TRACKING:
+		    		ind = my_controller.calc_target_index()
+				delta = my_controller.compute_delta(ind)
+				v = my_controller.compute_velocity(delta)
 				my_controller.publish_control(delta, ind, v)
 			else:
 				my_controller.publish_control(0, 0, 0)
