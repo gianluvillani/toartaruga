@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 import rospy
 from nav_msgs.msg import Path
+from std_msgs.msg import Bool
 
 def idle_tn(danger=0, path_available = False, danger_threshold=0.5):
     if path_available:
-        return 'RUN'
+        return 'RUN', True
     else:
-        return 'IDLE'
+        return 'IDLE', False
 
 def run_tn(path_available = False, danger = 0, danger_threshold=0.5):
     if path_available and danger < danger_value:
-        return 'RUN'
+        return 'RUN', False
     else:
-        return 'STOP'
+        return 'STOP', True
 
 def stop_tn(path_available = False, danger = 0, danger_threshold=0.5):
     if path_available and danger < danger_value:
-        return 'RUN'
+        return 'RUN', True
     else:
-        return 'STOP'
+        return 'STOP', False
 
 
 # Service needed:
@@ -28,6 +29,7 @@ def stop_tn(path_available = False, danger = 0, danger_threshold=0.5):
 
 class StateMachine:
     def __init__(self, init_state, states_tn):
+        self.transited = True
         self.state = init_state
         self.states_tn = states_tn
         # Initialize subscriber
@@ -36,7 +38,7 @@ class StateMachine:
         rospy.wait_for_service("/Stop_pure_pursuit")
         self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
         self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.update_path)
-
+        self.pub_command_controller = rospy.Publisher('/controller_active', Bool)
         self.danger = 1
         
     def udpdate_danger(self, danger):
@@ -47,20 +49,31 @@ class StateMachine:
 
     def advance_machine(self):
         args = {'danger': self.danger, 'path_available':self.path_available}
-        self.state = self.states_tn[self.state](**args)
+        self.state, self.transited = self.states_tn[self.state](**args)
+        if self.transited:
+            print('NEW STATE:', self.state)
 
     def run_service(self):
         if self.state == 'IDLE':
             pass
         if self.state == 'RUN':
             # request Start service
-            pure_pursuit_srv_start = rospy.ServiceProxy("/Start_pure_pursuit", Empty)
-            pure_pursuit_srv_start()
+            if self.transited:
+                msg = Bool()
+                msg.data = True
+                self.pub_command_controller = rospy.publish(msg)
+            else:
+                pass
 
         if self.state == 'STOP':
             # request Stop service
-            pure_pursuit_srv_stop = rospy.ServiceProxy("/Stop_pure_pursuit", Empty)
-            pure_pursuit_srv_stop()
+            if self.transited:
+                msg = Bool()
+                msg.data = False
+                self.pub_command_controller = rospy.publish(msg)
+            else:
+                pass
+            
 
 if __name__ == "__main__":
     rospy.init_node('supervisor', anonymous=True)
@@ -71,7 +84,6 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         # Refresh the state
         sm.advance_machine()
-        # Eventually sends signals to the other nodes in the form of services
         sm.run_service()
         rate.sleep()
 
