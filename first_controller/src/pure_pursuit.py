@@ -13,7 +13,7 @@ from geometry_msgs.msg import PoseStamped
 from low_level_interface.msg import lli_ctrl_request
 from tf.transformations import euler_from_quaternion 
 from controller import controller
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 
 class pure_pursuit(controller):
 	
@@ -33,7 +33,7 @@ class pure_pursuit(controller):
 		self.cx = []
 		self.cy = []
 		self.starting_time=rospy.get_time()
-		self.TRACKING = True
+		self.TRACKING = False
 		self.last_nearest_index = 0
 		self.counter = 0
 
@@ -44,24 +44,29 @@ class pure_pursuit(controller):
 		self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')
 		self.start_srv_nm = rospy.get_param(rospy.get_name() + '/Start_pure_pursuit_srv')
 		self.stop_srv_nm = rospy.get_param(rospy.get_name() + '/Stop_pure_pursuit_srv')
-
 		# Wait for services
 		
 
 		# Publishers/Subscribers
-		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
+		self.pub_steer_control = rospy.Publisher('/lli/ctrl_request', lli_ctrl_request)
 		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
-		self.sub_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
-		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
+		self.sub_pose = rospy.Subscriber('/SVEA2/pose', PoseStamped, self.save_state)
+		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.save_path)
+		self.sub_start_stop_controller = rospy.Subscriber('/start_stop_controller', Bool, self.start_stop)
+		#self.stop_srv = rospy.Service('/Stop_pure_pursuit', Empty, self.stop)
+		#self.start_srv = rospy.Service('/Start_pure_pursuit', Empty, self.start)
+		#self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
+
+		#self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
+		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
+		#self.sub_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
+		#self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
 		#self.stop_srv = rospy.Service(self.stop_srv_nm, Empty, self.stop)
 		#self.start_srv = rospy.Service(self.start_srv_nm, Empty, self.start)
-		self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
+		#self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
 		
-	def stop(self):
-		self.TRACKING = False
-	
-	def start(self):
-		self.TRACKING = True
+	def start_stop(self, start_stop_msg):
+		self.TRACKING = start_stop_msg.data
 	
 	def update_danger(self, danger_msg):
 		if danger_msg.data > 0.5:
@@ -186,18 +191,17 @@ if __name__ == "__main__":
 	rospy.init_node('Pure_pursuit_controller')
 	rate = rospy.Rate(80)
 	my_controller = pure_pursuit(l=0.2, lf = 0.35, v=20)
-	
+	print('MAIN STARTED')
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:   
 	  		my_controller.parse_path(my_controller.path)
 	    		my_controller.parse_state(my_controller.odom)
 			if my_controller.TRACKING:
-				
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
-				
 				v = my_controller.compute_velocity(delta)
 				my_controller.publish_control(delta, ind, v)
+				print('HEEEERRREEEEE')
 			else:
 				my_controller.publish_control(0, 0, 0)
 			rate.sleep()

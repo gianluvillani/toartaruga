@@ -3,10 +3,11 @@
 import rospy
 import smach
 import smach_ros
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 from nav_msgs.msg import Path
 import threading
 from std_srvs.srv import Empty
+
 
 class StateIdle(smach.State):
 
@@ -14,6 +15,7 @@ class StateIdle(smach.State):
 		smach.State.__init__(self, outcomes=['stopped', 'start'])
 		self.sub_danger = rospy.Subscriber('/obstacles/danger', Float32, self.danger_callback)
 		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.path_callback)
+		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
 		self.threshold = 0.8
@@ -48,6 +50,7 @@ class StateRunning(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['running', 'stop'])
 		self.sub_danger = rospy.Subscriber('/obstacles/danger', Float32, self.callback)
+		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
 		self.threshold = 0.8
@@ -56,8 +59,11 @@ class StateRunning(smach.State):
 
 
 	def execute(self, ud):
-		pure_pursuit_srv_start = rospy.ServiceProxy("/Start_pure_pursuit", Empty)
-		pure_pursuit_srv_start()
+		#pure_pursuit_srv_start = rospy.ServiceProxy("/Start_pure_pursuit", Empty)
+		#pure_pursuit_srv_start()
+		start_stop_msg = Bool()
+		start_stop_msg.data = True
+		self.pub_start_stop_controller.publish(start_stop_msg)
 		while True:
 			self.mutex.acquire()
 			if self.danger > self.threshold:
@@ -76,6 +82,7 @@ class StateStopped(smach.State):
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['stopped', 'start'])
 		self.sub_danger = rospy.Subscriber('/obstacles/danger', Float32, self.callback)
+		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
 		self.threshold = 0.5
@@ -83,8 +90,11 @@ class StateStopped(smach.State):
 		# service call: stop tracking
 
 	def execute(self, ud):
-		pure_pursuit_srv_stop = rospy.ServiceProxy("/Stop_pure_pursuit", Empty)
-		pure_pursuit_srv_stop()
+		#pure_pursuit_srv_stop = rospy.ServiceProxy("/Stop_pure_pursuit", Empty)
+		#pure_pursuit_srv_stop()
+		start_stop_msg = Bool()
+		start_stop_msg.data = False
+		self.pub_start_stop_controller.publish(start_stop_msg)
 		while True:
 			self.mutex.acquire()
 			if self.danger < self.threshold:
@@ -101,8 +111,8 @@ class StateStopped(smach.State):
 if __name__ == "__main__":
 	rospy.init_node('supervisor', anonymous=True)
 
-	rospy.wait_for_service("/Start_pure_pursuit")
-	rospy.wait_for_service("/Stop_pure_pursuit")
+	#rospy.wait_for_service("/Start_pure_pursuit")
+	#rospy.wait_for_service("/Stop_pure_pursuit")
 
 	sm = smach.StateMachine(outcomes=[])
 	with sm:
