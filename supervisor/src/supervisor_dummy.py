@@ -60,6 +60,8 @@ class StateMachine:
                 msg = Bool()
                 msg.data = True
                 self.pub_command_controller = rospy.publish(msg)
+            else:
+                pass
 
         if self.state == 'STOP':
             # request Stop service
@@ -67,7 +69,8 @@ class StateMachine:
                 msg = Bool()
                 msg.data = False
                 self.pub_command_controller = rospy.publish(msg)
-
+            else:
+                pass
             
 
 if __name__ == "__main__":
