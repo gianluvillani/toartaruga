@@ -50,6 +50,8 @@ class StateMachine:
     def advance_machine(self):
         args = {'danger': self.danger, 'path_available':self.path_available}
         self.state, self.transited = self.states_tn[self.state](**args)
+        if self.transited:
+            print('NEW STATE:', self.state)
 
     def run_service(self):
         if self.state == 'IDLE':
