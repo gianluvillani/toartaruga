@@ -41,27 +41,14 @@ class pure_pursuit(controller):
 		self.steer_control_top = rospy.get_param("/pure_pursuit/steer_control_topic")
 		self.car_pose_top = rospy.get_param("/pure_pursuit/car_pose_topic")
 		self.path_top = rospy.get_param("/pure_pursuit/path_topic")
-		self.danger_top = rospy.get_param("/pure_pursuit/danger_topic")
 		self.command_controller_top = rospy.get_param("/pure_pursuit/command_controller_topic")
 
-		# Publishers/Subscribers
-		self.pub_steer_control = rospy.Publisher('/lli/ctrl_request', lli_ctrl_request)
-		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
-		self.sub_pose = rospy.Subscriber('/SVEA2/pose', PoseStamped, self.save_state)
-		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.save_path)
-		#self.sub_start_stop_controller = rospy.Subscriber('/start_stop_controller', Bool, self.start_stop)
-		#self.stop_srv = rospy.Service('/Stop_pure_pursuit', Empty, self.stop)
-		#self.start_srv = rospy.Service('/Start_pure_pursuit', Empty, self.start)
-		#self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
-
+		# Publishers/Subscriber
 		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
 		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
 		self.sub_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
 		self.sub_start_stop_controller = rospy.Subscriber(self.command_controller_top, Bool, self.start_stop)
-		#self.stop_srv = rospy.Service(self.stop_srv_nm, Empty, self.stop)
-		#self.start_srv = rospy.Service(self.start_srv_nm, Empty, self.start)
-		#self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
 		
 	def start_stop(self, start_stop_msg):
 		self.TRACKING = start_stop_msg.data

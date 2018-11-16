@@ -37,9 +37,6 @@ class StateMachine:
         self.sub_path = rospy.Subscriber(self.path_top, Path, self.update_path)
         self.pub_command_controller = rospy.Publisher(self.command_controller_top, Bool)
 
-        #self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
-        #self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.update_path)
-        #self.pub_command_controller = rospy.Publisher('/start_stop_controller', Bool)
         self.danger = 1
         
     def update_danger(self, danger):
