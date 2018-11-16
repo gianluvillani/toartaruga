@@ -1,6 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <node pkg="vehicle_simulation" type="path_publisher.py" name="path_publisher" >
-  </node>
-
-  
+	<node pkg="vehicle_simulation" type="path_publisher.py" name="path_publisher">
+	</node>
 </launch>

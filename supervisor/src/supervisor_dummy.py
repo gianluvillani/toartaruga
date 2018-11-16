@@ -21,18 +21,16 @@ def stop_tn(path_available = False, danger = 0, danger_threshold=0.5):
     else:
         return 'STOP', False
 
-
-# Service needed:
-#    - Start pure_pursuit
-#    - Stop  pure_pursuit
-
-
 class StateMachine:
     def __init__(self, init_state, states_tn):
         self.transited = True
         self.state = init_state
         self.states_tn = states_tn
 	self.path_available = False
+	# Access rosparams
+	self.command_controller_top = rospy.get_param(rospy.get_name() + '/command_controller_top')
+	self.path_top = rospy.get_param(rospy.get_name() + '/path_topic')
+	self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')
         # Initialize subscriber
         self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
         self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.update_path)
