@@ -7,6 +7,7 @@
 	<param name="danger_topic"                   value="/danger"/>
 	<param name="Stop_pure_pursuit_srv"          value="/Stop_pure_pursuit"/>
 	<param name="Start_pure_pursuit_srv"         value="/Start_pure_pursuit"/>
+	<param name="command_controller_topic"         value="/start_stop_controller"/>
 	</node>
 </launch>
 
