@@ -38,10 +38,10 @@ class pure_pursuit(controller):
 		self.counter = 0
 
 		# Access rosparams
-		self.steer_control_top = rospy.get_param("/pure_pursuit/steer_control_topic")
-		self.car_pose_top = rospy.get_param("/pure_pursuit/car_pose_topic")
-		self.path_top = rospy.get_param("/pure_pursuit/path_topic")
-		self.command_controller_top = rospy.get_param("/pure_pursuit/command_controller_topic")
+		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
+		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
+		self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 
 		# Publishers/Subscriber
 		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)

@@ -28,9 +28,9 @@ class StateMachine:
         self.states_tn = states_tn
 	self.path_available = False
 	# Access rosparams
-	self.command_controller_top = rospy.get_param("/supervisor/command_controller_topic")
-	self.path_top = rospy.get_param("/supervisor/path_topic")
-	self.danger_top = rospy.get_param("/supervisor/danger_topic")
+	self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
+	self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
+	self.danger_top = rospy.get_param(rospy.get_name() + "/danger_topic")
         # Initialize subscriber
         
 	self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
