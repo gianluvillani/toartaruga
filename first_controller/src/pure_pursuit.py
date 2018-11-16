@@ -173,7 +173,7 @@ class pure_pursuit(controller):
 
 
 if __name__ == "__main__":
-	rospy.init_node('Pure_pursuit_controller')
+	rospy.init_node('pure_pursuit')
 	rate = rospy.Rate(80)
 	my_controller = pure_pursuit(l=0.2, lf = 0.35, v=20)
 	print('MAIN STARTED')

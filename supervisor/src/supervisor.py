@@ -13,7 +13,7 @@ class StateIdle(smach.State):
 
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['stopped', 'start'])
-		self.sub_danger = rospy.Subscriber('/obstacles/danger', Float32, self.danger_callback)
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
 		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.path_callback)
 		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
@@ -49,7 +49,7 @@ class StateRunning(smach.State):
 
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['running', 'stop'])
-		self.sub_danger = rospy.Subscriber('/obstacles/danger', Float32, self.callback)
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.callback)
 		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
@@ -122,5 +122,12 @@ if __name__ == "__main__":
 		                       transitions={'running':'StateRunning', 'stop':'StateStopped'})
 		smach.StateMachine.add('StateStopped', StateStopped(),
 		                       transitions={'stopped':'StateStopped', 'start':'StateRunning'})
-	outcome = sm.execute()
+
+	smach_thread = threading.Thread(target=sm.execute)
+	smach_thread.start()
+
+	rospy.spin()
+	sm.request_preempt()
+
+	smach_thread.join()
 
