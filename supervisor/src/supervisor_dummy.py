@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 import rospy
 from nav_msgs.msg import Path
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float32
 
 def idle_tn(danger=0, path_available = False, danger_threshold=0.5):
-    if path_available:
+    if path_available and danger < danger_threshold:
         return 'RUN', True
     else:
         return 'IDLE', False
 
 def run_tn(path_available = False, danger = 0, danger_threshold=0.5):
-    if path_available and danger < danger_value:
+    if path_available and danger < danger_threshold:
         return 'RUN', False
     else:
         return 'STOP', True
 
 def stop_tn(path_available = False, danger = 0, danger_threshold=0.5):
-    if path_available and danger < danger_value:
+    if path_available and danger < danger_threshold:
         return 'RUN', True
     else:
         return 'STOP', False
@@ -26,20 +26,23 @@ class StateMachine:
         self.transited = True
         self.state = init_state
         self.states_tn = states_tn
+	self.path_available = False
 	# Access rosparams
-	self.command_controller_top = rospy.get_param(rospy.get_name() + '/command_controller_top')
-	self.path_top = rospy.get_param(rospy.get_name() + '/path_topic')
-	self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')
+	self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
+	self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
+	self.danger_top = rospy.get_param(rospy.get_name() + "/danger_topic")
         # Initialize subscriber
-        self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
-        self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.update_path)
-        self.pub_command_controller = rospy.Publisher('/controller_active', Bool)
+        
+	self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
+        self.sub_path = rospy.Subscriber(self.path_top, Path, self.update_path)
+        self.pub_command_controller = rospy.Publisher(self.command_controller_top, Bool)
+
         self.danger = 1
         
-    def udpdate_danger(self, danger):
+    def update_danger(self, danger):
         self.danger = danger.data
         
-    def udpdate_path(self, danger):
+    def update_path(self, path):
         self.path_available = True
 
     def advance_machine(self):
@@ -56,7 +59,7 @@ class StateMachine:
             if self.transited:
                 msg = Bool()
                 msg.data = True
-                self.pub_command_controller = rospy.publish(msg)
+                self.pub_command_controller.publish(msg)
             else:
                 pass
 
@@ -65,7 +68,7 @@ class StateMachine:
             if self.transited:
                 msg = Bool()
                 msg.data = False
-                self.pub_command_controller = rospy.publish(msg)
+                self.pub_command_controller.publish(msg)
             else:
                 pass
             
