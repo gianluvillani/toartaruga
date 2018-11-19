@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+	<node pkg="supervisor" type="supervisor_dummy.py" name="supervisor">
+	<param name="command_controller_topic"       value="/start_stop_controller"/>
+	<param name="path_topic"                     value="/SVEA2/path"/>
+	<param name="danger_topic"                   value="/danger"/>
+	</node>
+</launch>
+
+
