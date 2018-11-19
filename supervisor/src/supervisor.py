@@ -81,7 +81,7 @@ class StateStopped(smach.State):
 
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['stopped', 'start'])
-		self.sub_danger = rospy.Subscriber('/obstacles/danger', Float32, self.callback)
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.callback)
 		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
@@ -99,6 +99,8 @@ class StateStopped(smach.State):
 			self.mutex.acquire()
 			if self.danger < self.threshold:
 				return 'start'
+			else:
+				print "StateStopped danger: "+str(self.danger)
 			self.mutex.release()
 			rospy.sleep(self.sleep_time)
 
