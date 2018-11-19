@@ -14,4 +14,5 @@
 		<arg name="model" value="SVEA2" /> 
 	</include>
 	<include file="$(find first_controller)/launch/controller.launch" />
+	<include file="$(find supervisor)/launch/supervisor.launch" />
 </launch>

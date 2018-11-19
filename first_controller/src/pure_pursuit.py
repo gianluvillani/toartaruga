@@ -162,10 +162,10 @@ class pure_pursuit(controller):
 	    Lf = self.k * self.v + self.lf
 
 	    delta = math.atan2(2.0 * self.l * math.sin(alpha) / Lf, 1.0)
-	    if delta > math.pi/4:
-		delta = math.pi/4
-	    if delta < -math.pi/4:
-		delta = -math.pi/4
+	    if delta > math.pi/5:
+		delta = math.pi/5
+	    if delta < -math.pi/5:
+		delta = -math.pi/5
 	    return delta
 
 	def compute_velocity(self, delta):
