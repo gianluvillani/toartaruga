@@ -14,7 +14,7 @@ class obstacle_measurement:
 		self.circle_obstacles = []
 
 		# Access rosparams
-		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_top')
+		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_topic')
 		self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')	
 
 		# Publishers and Subscribers

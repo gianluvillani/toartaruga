@@ -7,7 +7,7 @@
 	</node>
 	<include file="$(find rplidar_ros)/launch/rplidar.launch" />
 	<include file="$(find obstacle_detector)/launch/nodes.launch" />
-	<include file="$(find obstacle_measurement)/launch/obstacel_measurement.launch" />
+	<include file="$(find obstacle_measurement)/launch/obstacle_measurement.launch" />
 	<include file="$(find vehicle_simulation)/launch/path_pulisher.launch" />
 	<include file="$(find qualisys)/launch/qualisys.launch" />
 	<include file="$(find qualisys)/launch/qualisys_odom.launch"> 
