@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+	<node pkg="obstacle_measurement" type="obstacle_measurement.py" name="obstacle_measurement">
+	<param name="obstacles_topic"            value="/obstacles"/>
+	<param name="danger_topic"                   value="/danger"/>
+	</node>
+</launch>
+
+

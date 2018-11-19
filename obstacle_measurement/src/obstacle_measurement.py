@@ -12,25 +12,15 @@ class obstacle_measurement:
 		self.obstacle_msg = Obstacles()
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
+
+		# Access rosparams
+		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_top')
+		self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')	
+
 		# Publishers and Subscribers
-		#self.sub_pose = rospy.Subscriber('/SVEA2/pose', PoseStamped, self.parse_state)
-		#self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.parse_path)
-		self.pub_danger = rospy.Publisher('/danger', Float32)
-		self.sub_obstacles = rospy.Subscriber('/obstacles', Obstacles, self.save_obstacles)
-	"""
-	def parse_state(self, pose_msg):
-                self.x_car = pose_msg.pose.position.x
-                self.y_car = pose_msg.pose.position.y
-                orientation_q = pose_msg.pose.orientation
-                orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
-                self.yaw_car = euler_from_quaternion(orientation_list)[2]
-	def parse_path(self, path_msg):			
-		self.path_x_list = []
-		self.path_y_list = []
-		for pose in path_msg.poses:
-			self.path_x_list.append(pose.pose.position.x)
-			self.path_y_list.append(pose.pose.position.y)
-	"""
+		self.pub_danger = rospy.Publisher(self.danger_top, Float32)
+		self.sub_obstacles = rospy.Subscriber(self.obstacles_top, Obstacles, self.save_obstacles)
+
 	def save_obstacles(self, obstacle_msg):
 		self.obstacle_msg = obstacle_msg
 
