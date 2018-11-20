@@ -14,6 +14,7 @@ from low_level_interface.msg import lli_ctrl_request
 from tf.transformations import euler_from_quaternion 
 from controller import controller
 from std_msgs.msg import Float32, Bool
+from spline_interpolation import Spline2D
 
 class pure_pursuit(controller):
 	
@@ -82,11 +83,22 @@ class pure_pursuit(controller):
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
 		#print "PATH PUBLISHED"				
-		self.cx = []
-		self.cy = []
+		cx = []
+		cy = []
+		ck = []
 		for pose in path_msg.poses:
-			self.cx.append(pose.pose.position.x)
-			self.cy.append(pose.pose.position.y)
+			cx.append(pose.pose.position.x)
+			cy.append(pose.pose.position.y)
+		 sp = Spline2D(x, y)
+    		 s = np.arange(0, sp.s[-1], 0.01)
+   		 for i_s in s:
+			ix, iy = sp.calc_position(i_s)
+			cx.append(ix)
+			cy.append(iy)
+			ck.append(sp.calc_curvature(i_s))
+		self.cx = cx
+		self.cy = cy
+		self.cx = ck
 		
 	def publish_control(self, steering_degree, target_ind, velocity):
 		linear_control = velocity	#check the map to vel
@@ -168,9 +180,13 @@ class pure_pursuit(controller):
 		delta = -math.pi/5
 	    return delta
 
-	def compute_velocity(self, delta):
-		return self.v
-
+	def compute_velocity(self, delta, ind):
+		# acceleration = v²/r = v²k
+		k = self.ck[ind]
+		k_max = 1/0.2
+		k_min = 0
+		v_max = 80
+		return v_max*(1-k/max(k_max, k))+20
 
 if __name__ == "__main__":
 	rospy.init_node('pure_pursuit')
@@ -184,7 +200,7 @@ if __name__ == "__main__":
 			if my_controller.TRACKING:
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
-				v = my_controller.compute_velocity(delta)
+				v = my_controller.compute_velocity(delta, ind)
 				my_controller.publish_control(delta, ind, v)
 				print('HEEEERRREEEEE')
 			else:
