@@ -33,7 +33,7 @@ class pure_pursuit(controller):
 		self.cx = []
 		self.cy = []
 		self.starting_time=rospy.get_time()
-		self.TRACKING = False
+		self.TRACKING = True
 		self.last_nearest_index = 0
 		self.counter = 0
 
@@ -169,7 +169,8 @@ class pure_pursuit(controller):
 	    return delta
 
 	def compute_velocity(self, delta):
-		return self.v
+		v_max = 80
+		return min(v_max, self.v*0.8/math.tan(abs(delta)+math.pi/12))
 
 
 if __name__ == "__main__":
@@ -182,11 +183,17 @@ if __name__ == "__main__":
 	  		my_controller.parse_path(my_controller.path)
 	    		my_controller.parse_state(my_controller.odom)
 			if my_controller.TRACKING:
+#				rospy.loginfo(str(v))
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
 				v = my_controller.compute_velocity(delta)
+				rospy.loginfo(str(v))
+
 				my_controller.publish_control(delta, ind, v)
 				print('HEEEERRREEEEE')
 			else:
-				my_controller.publish_control(0, 0, 0)
+				rospy.loginfo("hej")
+				ind = my_controller.calc_target_index()
+                                delta = my_controller.compute_delta(ind)
+				my_controller.publish_control(delta, 0, 0)
 			rate.sleep()

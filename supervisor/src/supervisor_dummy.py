@@ -35,7 +35,7 @@ class StateMachine:
         
 	self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
         self.sub_path = rospy.Subscriber(self.path_top, Path, self.update_path)
-        self.pub_command_controller = rospy.Publisher(self.command_controller_top, Bool)
+        self.pub_command_controller = rospy.Publisher(self.command_controller_top, Bool,queue_size=10)
 
         self.danger = 1
         
