@@ -161,7 +161,6 @@ class pure_pursuit(controller):
 	    return ind
 
 	def compute_delta(self,ind):
-
 	    if ind ==None:
 		return 0
 	    tx = self.cx[ind]
@@ -179,22 +178,16 @@ class pure_pursuit(controller):
 	    if delta < -math.pi/5:
 		delta = -math.pi/5
 	    return delta
-"""
-<<<<<<< HEAD
-�	def compute_velocity(self, delta):
-		v_max = 80
-		return min(v_max, self.v*0.8/math.tan(abs(delta)+math.pi/12))
 
-=======
+
 	def compute_velocity(self, delta, ind):
-		# acceleration = v²/r = v²k
+		# acceleration = vÂ²/r = vÂ²k
 		k = self.ck[ind]
 		k_max = 1/0.2
 		k_min = 0
 		v_max = 80
 		return v_max*(1-k/max(k_max, k))+20
->>>>>>> 9ff5196a1335bd0bf11692c84a6830fbe81d8b7c
-"""
+
 if __name__ == "__main__":
 	rospy.init_node('pure_pursuit')
 	rate = rospy.Rate(80)
@@ -208,15 +201,9 @@ if __name__ == "__main__":
 #				rospy.loginfo(str(v))
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
-"""
-<<<<<<< HEAD
-				v = my_controller.compute_velocity(delta)
 				rospy.loginfo(str(v))
-
-=======
 				v = my_controller.compute_velocity(delta, ind)
->>>>>>> 9ff5196a1335bd0bf11692c84a6830fbe81d8b7c
-"""
+
 				my_controller.publish_control(delta, ind, v)
 				print('HEEEERRREEEEE')
 			else:
