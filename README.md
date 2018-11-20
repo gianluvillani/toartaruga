@@ -96,3 +96,6 @@ Launch the obstacle detector
 
 Launch rviz on your local computer;)
 OBS. If you want to visualize obstacles on your laptop be sure to correctly build the obstacle_detector package.
+
+
+### Platooning (Week 3 - Sunday)
