@@ -43,9 +43,10 @@ class pure_pursuit(controller):
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
 		self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
-
+		
 		# Publishers/Subscriber
 		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
+		self.pub_steer_debug = rospy.Publisher('/steering_input', Float32)
 		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
 		self.sub_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
@@ -89,25 +90,30 @@ class pure_pursuit(controller):
 		for pose in path_msg.poses:
 			cx.append(pose.pose.position.x)
 			cy.append(pose.pose.position.y)
-		 sp = Spline2D(x, y)
-    		 s = np.arange(0, sp.s[-1], 0.01)
-   		 for i_s in s:
+		sp = Spline2D(cx, cy)
+    		s = np.arange(0, sp.s[-1], 0.01)
+		cx = []
+                cy = []
+   		for i_s in s:
 			ix, iy = sp.calc_position(i_s)
 			cx.append(ix)
 			cy.append(iy)
 			ck.append(sp.calc_curvature(i_s))
 		self.cx = cx
 		self.cy = cy
-		self.cx = ck
+		self.ck = ck
 		
 	def publish_control(self, steering_degree, target_ind, velocity):
 		linear_control = velocity	#check the map to vel
-		angular_control = steering_degree*(400/math.pi)*0.2+0.8*self.start_steering
+		angular_control = steering_degree*(400/math.pi)*0.9+0.1*self.start_steering
 		self.start_steering = angular_control
 		ctrl_request_msg = lli_ctrl_request()
 		ctrl_request_msg.velocity = int(linear_control)
 		ctrl_request_msg.steering = int(angular_control)
 		self.pub_steer_control.publish(ctrl_request_msg)
+		msg = Float32()
+		msg.data = angular_control
+		self.pub_steer_debug.publish(msg)
 		#self.save_data(target_ind, steering_degree, linear_control)	
 	
 	def save_data(self, index, delta, velocity):
@@ -173,25 +179,25 @@ class pure_pursuit(controller):
 	    Lf = self.k * self.v + self.lf
 
 	    delta = math.atan2(2.0 * self.l * math.sin(alpha) / Lf, 1.0)
-	    if delta > math.pi/5:
-		delta = math.pi/5
-	    if delta < -math.pi/5:
-		delta = -math.pi/5
+	    if delta > math.pi/4*0.95:
+		delta = math.pi/4*0.95
+	    if delta < -math.pi/4*0.95:
+		delta = -math.pi/4*0.95
 	    return delta
 
 
 	def compute_velocity(self, delta, ind):
-		# acceleration = vÂ²/r = vÂ²k
+		# a
 		k = self.ck[ind]
 		k_max = 1/0.2
 		k_min = 0
-		v_max = 80
-		return v_max*(1-k/max(k_max, k))+20
+		v_max = 50
+		return v_max*(1-k/max(k_max, k))
 
 if __name__ == "__main__":
 	rospy.init_node('pure_pursuit')
-	rate = rospy.Rate(80)
-	my_controller = pure_pursuit(l=0.2, lf = 0.35, v=20)
+	rate = rospy.Rate(20)
+	my_controller = pure_pursuit(l=0.23, lf = 0.4, v=20)
 	print('MAIN STARTED')
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:   
@@ -201,9 +207,7 @@ if __name__ == "__main__":
 #				rospy.loginfo(str(v))
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
-				rospy.loginfo(str(v))
 				v = my_controller.compute_velocity(delta, ind)
-
 				my_controller.publish_control(delta, ind, v)
 				print('HEEEERRREEEEE')
 			else:
