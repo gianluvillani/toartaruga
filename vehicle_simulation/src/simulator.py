@@ -13,6 +13,8 @@ from low_level_interface.msg import lli_ctrl_request
 from geometry_msgs.msg import Twist
 from car_model import KinematicBicycle
 
+platooning = True
+global_frame = "qualisys"
 
 class VehicleSimulation:
     """
@@ -25,15 +27,17 @@ class VehicleSimulation:
 
         # Needed for RViz visualization
         self.vehicle_frame_id = "base"
-        self.global_frame_id = "odom"
+        self.global_frame_id = global_frame
         self.broadcaster = tf2_ros.TransformBroadcaster()
         self.t = geometry_msgs.msg.TransformStamped()
         self.odometry_sim = Odometry()
 
         # Initialize Publishers/Subscribers
         self.pub_odometry = rospy.Publisher('/simulator/odom', Odometry, queue_size=1)
-        self.sub_control = rospy.Subscriber('/lli/ctrl_request', lli_ctrl_request, self.step_simulation)
-
+        if not platooning:
+		self.sub_control = rospy.Subscriber('/lli/ctrl_request', lli_ctrl_request, self.step_simulation)
+	else:
+		self.sub_control = rospy.Subscriber('/key_vel', Twist, self.step_simulation)
         # Initialize node
         #rospy.init_node('car_simulation_node', anonymous = True)
 
@@ -43,9 +47,14 @@ class VehicleSimulation:
         :return:
         """
         # update state
-        velocity = data.velocity * 0.01
-        steering_angle = data.steering * 0.01 *pi/4
-        print(steering_angle)
+        if not platooning:
+		velocity = data.velocity * 0.01
+        	steering_angle = data.steering * 0.01 * pi/4
+	else:
+		velocity = data.linear.x * 0.001
+		steering_angle = data.angular.z * 0.01 * pi/4
+
+	print(steering_angle)
         print(velocity)
         self.model.update_state(v=velocity, delta=steering_angle)
         vehicle_state = self.model.get_state()
