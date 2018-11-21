@@ -105,9 +105,9 @@ This message is continuosly checked by the state_machine that according to its v
 
 ### Platooning PID (Week 4 - Sunday)
 For the ghost publisher:  
-Keyboard controller
+Keyboard controller 
 <code>
-     $ rosrun key_teleop key_teleop.py
+     $  rosrun key_teleop key_teleop.py
 </code>
 Simulator, /simulator/odom can be used as a ghost car to be followed                  
 <code>      
