@@ -109,9 +109,9 @@ Keyboard controller
 <code>
      $ rosrun key_teleop key_teleop.py
 </code>
-Simulator, /simulator/odom can be used as a ghost car to be followed                
+Simulator, /simulator/odom can be used as a ghost car to be followed                  
 <code>      
-    $ rosrun vehicle_simulation vehicle_simulation.py
+    $  rosrun vehicle_simulation vehicle_simulation.py
 </code>
 
 IN PROGRESS
