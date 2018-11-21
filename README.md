@@ -104,9 +104,9 @@ The node obstacle_danger_measure (check name) checks all the obstacles and publi
 This message is continuosly checked by the state_machine that according to its value outputs the right decisions to the controller.
 
 ### Platooning PID (Week 4 - Sunday)
-For the ghost publisher:
+For the ghost publisher:  
 <code>
-    $ rosrun key_teleop key_teleop.py
+     $ rosrun key_teleop key_teleop.py
 </code>
 
 Launch the obstacle detector                  
