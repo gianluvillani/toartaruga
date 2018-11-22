@@ -13,7 +13,7 @@ from std_msgs.msg import Float32, Bool
 
 class pid_controller(controller):
 	
-	def __init__(self, K_yaw_P = 1 , K_yaw_D = 0, K_yaw_I = 0, d_des = 0.5, K_dis_P = 1, K_dis_D = 0, K_dis_I = 0, Ts = 0.0125):
+	def __init__(self, K_yaw_P = 1 , K_yaw_D = 0, K_yaw_I = 0, d_des = 1, K_dis_P = 1, K_dis_D = 0, K_dis_I = 0, Ts = 0.0125):
 		self.start_steering = 0
 		self.Ts = Ts
 		self.K_yaw_P = K_yaw_P
@@ -91,11 +91,13 @@ class pid_controller(controller):
 			self.y_path.append(pose.pose.position.y)
 
 	def parse_waypoint(self, waypoint_msg):
-		self.x_w = waypoint_msg.pose.pose.position.x
-                self.y_w = waypoint_msg.pose.pose.position.y
-		orientation_q = waypoint_msg.pose.pose.orientation
-                orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
-                self.yaw_w = euler_from_quaternion(orientation_list)[2]
+		#self.x_w = waypoint_msg.pose.position.x
+                #self.y_w = waypoint_msg.pose.position.y
+		#orientation_q = waypoint_msg.pose.orientation
+                #orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+                #self.yaw_w = euler_from_quaternion(orientation_list)[2]
+		self.x_w = 0
+		self.y_w = 0
 
 	def publish_control(self, steering_degree, velocity):
 		linear_control = velocity	#check the map to vel
@@ -122,71 +124,90 @@ class pid_controller(controller):
 		error_D_yaw = (self.error_yaw - self.old_error_yaw)/self.Ts
 		return error_D_yaw, error_D_dis
 
-	def compute_velocity_angular(self, x_w, y_w):
-		d = math.sqrt((self.x-x_w)**2 + (self.y-y_w)**2)
-		yaw_des = math.atan2(y_w-self.y, x_w-self.x)
+	def compute_velocity_angular(self):
+		d = math.sqrt((self.x-self.x_w)**2 + (self.y-self.y_w)**2)
 		self.old_error_dis = self.error_dis
 		self.error_dis = d - self.d_des
+               
 
+		if self.error_dis < 0.1:
+			self.error_dis = 0.0
+
+		yaw_des = math.atan2(self.y_w-self.y, self.x_w-self.x)
 		self.old_error_yaw = self.error_yaw
-		self.error_yaw = self.yaw-yaw_des
-
+		self.error_yaw = yaw_des - self.yaw
+		#rospy.logerr("e_yaw+ = %s ,  e_yaw- = %s", self.error_yaw, self.error_yaw-math.pi*2)
 		self.update_error_I()
 	
 		error_D_yaw, error_D_dis = self.derivative()
 
 		v = self.K_dis_P*self.error_dis + self.K_dis_D*error_D_dis + self.K_dis_I*self.error_I_dis
-		#gamma = 2.7
+		gamma = 3
 		if v < 0:
-			#v = -v*(1-math.exp(-gamma*v))
-			v = v - 14
+			#v = -(v-18)*(-1+math.exp(gamma*v))
+			v = v - 15
 		if v > 0:
-			#v = -v*(1-math.exp(gamma*v))
+			#v = (v+13)*(1-math.exp(-gamma*v))
 			v = v + 13
 
 		if v > 100:
 			v = 100
 
 		if v < -100:
-			v = -100	
-		
-		if (yaw_des-self.yaw) > math.pi: 
-			delta = self.K_yaw_P*self.error_yaw + self.K_yaw_D*error_D_yaw + self.K_yaw_I*self.error_I_yaw
+			v = -100
+
+		delta = self.K_yaw_P*self.error_yaw + self.K_yaw_D*error_D_yaw + self.K_yaw_I*self.error_I_yaw
+		if delta > math.pi/4:
+			delta = math.pi/4
+		if delta < -math.pi/4:
+			delta = -math.pi/4
+		if self.error_yaw > math.pi: 
+			delta = -self.K_yaw_P*(2*math.pi-self.error_yaw) + self.K_yaw_D*error_D_yaw + self.K_yaw_I*self.error_I_yaw
 			if delta > math.pi/4:
 				delta = math.pi/4
 			if delta < -math.pi/4:
 				delta = -math.pi/4
 
-		if (yaw_des-self.yaw) < math.pi: 
-			delta = -(self.K_yaw_P*self.error_yaw + self.K_yaw_D*error_D_yaw + self.K_yaw_I*self.error_I_yaw)
+		if self.error_yaw < -math.pi: 
+			delta = self.K_yaw_P*(2*math.pi+self.error_yaw) + self.K_yaw_D*error_D_yaw + self.K_yaw_I*self.error_I_yaw
 			if delta > math.pi/4:
 				delta = math.pi/4
 			if delta < -math.pi/4:
 				delta = -math.pi/4
 		return delta, v
+"""
+	def compute_delta(self,tx, ty):
 
+	
+	    alpha = math.atan2(ty - self.y, tx - self.x) - self.yaw
+
+	    #Lf = self.k * self.v + self.lf
+	    Lf = self.error_dis + self.d_des
+	    l = 0.3
+	    
+	    delta = math.atan2(2.0 * l * math.sin(alpha) / Lf, 1.0)
+	    if delta > math.pi/4:
+		delta = math.pi/4
+	    if delta < -math.pi/4:
+		delta = -math.pi/4
+
+	    return delta_pp
+"""
 
 if __name__ == "__main__":
 	rospy.init_node('pid_controller')
-	my_controller = pid_controller(K_yaw_P = 1, K_dis_P = 15, K_dis_I = 0, K_dis_D = 0, d_des = 0)
-	#rate_sleep = rospy.Rate(50)
+	my_controller = pid_controller(K_yaw_P = 1.2, K_yaw_D = 0.2, K_yaw_I = 0.01, K_dis_P = 14, K_dis_I = 0, K_dis_D = 3, d_des = 0.2)
 	rate = rospy.Rate(80)
-	rospy.loginfo("%s MAIN STARTED")
+	#rospy.logerr("%s MAIN STARTED")
 	while not rospy.is_shutdown():
-		if my_controller.state_available and my_controller.path_available:   
-	  		my_controller.parse_path(my_controller.path)
+		if my_controller.state_available and my_controller.waypoint_available:
+	  		my_controller.parse_waypoint(my_controller.waypoint)
 	    		my_controller.parse_state(my_controller.state)
 			if my_controller.TRACKING:
-				ind = 0
-				if my_controller.error_dis > 0.2:		
-					x_w = my_controller.x_path[ind]
-					y_w = my_controller.y_path[ind]
-					delta, v = my_controller.compute_velocity_angular(0,0)
-					#rospy.logerr("x_w = %s ,  y_w = %s, v = %s", x_w, y_w, v)		
-					my_controller.publish_control(delta, v)
-				else:
-					ind =+ 1
-			
+				delta, v = my_controller.compute_velocity_angular()
+				#delta_pp = my_controller.compute_delta(my_controller.x_w, my_controller.y_w)		
+				rospy.logerr(" speed = %s, error_dis = %s", v, my_controller.error_dis)		
+				my_controller.publish_control(delta, v)
 			else:
 				my_controller.publish_control(0, 0)
 			rate.sleep()

@@ -4,7 +4,7 @@
 	<param name="steer_control_topic"            value="/lli/ctrl_request"/>
 	<param name="car_pose_topic"                 value="/SVEA2/pose"/>
 	<param name="path_topic"                     value="/SVEA2/path"/>
-	<param name="waypoint_topic"                     value="/simulator/odom"/>
+	<param name="waypoint_topic"                     value="/SVEA4/pose"/>   <!-- write /SVEA4/pose tofollow car 4 -->
 	<param name="command_controller_topic"         value="/start_stop_controller"/>
 	</node>
 </launch>

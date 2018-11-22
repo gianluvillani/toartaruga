@@ -45,8 +45,7 @@ class StateMachine:
         self.states_tn = states_tn
 	self.path_available = False
 	self.prev_state = init_state
-#decide manually if there is another car
-	self.another_car= True
+	self.another_car= False
 	# Access rosparams
 	self.command_controller_pure_pursuit = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 	self.command_controller_follow = rospy.get_param(rospy.get_name() + "/command_controller_follow") #add in the launch file
@@ -54,13 +53,17 @@ class StateMachine:
 	self.danger_top = rospy.get_param(rospy.get_name() + "/danger_topic")
         # Initialize subscriber
         
+	self.sub_another_car=rospy.Subscriber("Bool_another_car", Bool, self.callback_another_car)
 	self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
         self.sub_path = rospy.Subscriber(self.path_top, Path, self.update_path)
-	self.pub_command_controller_pure_pursuit = rospy.Publisher(self.command_controller_pure_pursuit, Bool) 
+	self.pub_command_controller_pure_pursuit = rospy.Publisher(self.command_controller_pure_pursuit, Bool, queue_size=10) 
         self.pub_command_controller_follow = rospy.Publisher(self.command_controller_follow, Bool) #write in the PID controller
 
         self.danger = 1
-        
+ 
+    def callback_another_cat(self, bool_another_car):
+	self.another_car=bool_another_car.data
+   
     def update_danger(self, danger):
         self.danger = danger.data
         
