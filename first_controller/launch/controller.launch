@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-	<node pkg="first_controller" type="pure_pursuit.py" name="pure_pursuit">
+	<node pkg="first_controller" type="pid_controller.py" name="pid_controller">
 	<param name="steer_control_topic"            value="/lli/ctrl_request"/>
 	<param name="car_pose_topic"                 value="/SVEA2/pose"/>
 	<param name="path_topic"                     value="/SVEA2/path"/>
+	<param name="waypoint_topic"                     value="/simulator/odom"/>
 	<param name="command_controller_topic"         value="/start_stop_controller"/>
 	</node>
 </launch>
