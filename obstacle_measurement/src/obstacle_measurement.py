@@ -6,21 +6,26 @@ from obstacle_detector.msg import Obstacles
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 from std_msgs.msg import Float32
+from low_level_interface.msg import lli_ctrl_request
 
 class obstacle_measurement:
 	def __init__(self):
 		self.obstacle_msg = Obstacles()
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
-
+		self.ctrl_msg = lli_ctrl_request() 
 		# Access rosparams
 		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_topic')
 		self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')	
+		
 
 		# Publishers and Subscribers
 		self.pub_danger = rospy.Publisher(self.danger_top, Float32)
 		self.sub_obstacles = rospy.Subscriber(self.obstacles_top, Obstacles, self.save_obstacles)
+		self.sub_control = rospy.Subscriber("/lli/lli_ctrl_request", lli_ctrl_request, self.save_ctrl_state)
 
+	def save_ctrl_state(self, ctrl_msg):
+		self.ctr
 	def save_obstacles(self, obstacle_msg):
 		self.obstacle_msg = obstacle_msg
 
