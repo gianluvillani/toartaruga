@@ -28,6 +28,7 @@ class StateMachine:
         self.states_tn = states_tn
 	self.path_available = False
 	# Access rosparams
+	""
 	self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 	self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
 	self.danger_top = rospy.get_param(rospy.get_name() + "/danger_topic")
@@ -35,8 +36,12 @@ class StateMachine:
         
 	self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
         self.sub_path = rospy.Subscriber(self.path_top, Path, self.update_path)
-        self.pub_command_controller = rospy.Publisher(self.command_controller_top, Bool)
-
+        self.pub_command_controller = rospy.Publisher(self.command_controller_top, Bool,queue_size=10)
+	"""
+	self.sub_danger = rospy.Subscriber('/danger', Float32, self.update_danger)
+        self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.update_path)
+        self.pub_command_controller = rospy.Publisher('/start_stop_controller', Bool,queue_size=10)
+	"""
         self.danger = 1
         
     def update_danger(self, danger):

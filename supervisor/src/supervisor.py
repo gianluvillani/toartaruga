@@ -23,7 +23,7 @@ class StateIdle(smach.State):
 		self.path = None
 
 	def execute(self, ud):
-		while True:
+		while not rospy.is_shutdown():
 			self.mutex.acquire()
 			if self.path != None:
 				if self.danger > self.threshold:
@@ -42,7 +42,7 @@ class StateIdle(smach.State):
 
 	def danger_callback(self, msg):
 		self.mutex.acquire()
-		self.danger = msg
+		self.danger = msg.data
 		self.mutex.release()
 
 class StateRunning(smach.State):
@@ -64,7 +64,7 @@ class StateRunning(smach.State):
 		start_stop_msg = Bool()
 		start_stop_msg.data = True
 		self.pub_start_stop_controller.publish(start_stop_msg)
-		while True:
+		while not rospy.is_shutdown():
 			self.mutex.acquire()
 			if self.danger > self.threshold:
 				self.mutex.release()
@@ -74,14 +74,14 @@ class StateRunning(smach.State):
 
 	def callback(self, msg):
 		self.mutex.acquire()
-		self.danger = msg
+		self.danger = msg.data
 		self.mutex.release()
 
 class StateStopped(smach.State):
 
 	def __init__(self):
 		smach.State.__init__(self, outcomes=['stopped', 'start'])
-		self.sub_danger = rospy.Subscriber('/obstacles/danger', Float32, self.callback)
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.callback)
 		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
@@ -95,16 +95,17 @@ class StateStopped(smach.State):
 		start_stop_msg = Bool()
 		start_stop_msg.data = False
 		self.pub_start_stop_controller.publish(start_stop_msg)
-		while True:
+		while not rospy.is_shutdown():
 			self.mutex.acquire()
 			if self.danger < self.threshold:
+				self.mutex.release()
 				return 'start'
 			self.mutex.release()
 			rospy.sleep(self.sleep_time)
 
 	def callback(self, msg):
 		self.mutex.acquire()
-		self.danger = msg
+		self.danger = msg.data
 		self.mutex.release()
 
 
