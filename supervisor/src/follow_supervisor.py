@@ -57,7 +57,7 @@ class StateMachine:
 		self.danger_top = rospy.get_param(rospy.get_name() + "/danger_topic")
 		# Initialize subscriber
 
-		#self.sub_another_car=rospy.Subscriber("Bool_another_car", Bool, self.callback_another_car)
+#		self.sub_another_car=rospy.Subscriber("Bool_another_car", Bool, self.callback_another_car)
 		self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.update_danger)
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.update_path)
 		self.pub_command_controller_pure_pursuit = rospy.Publisher(self.command_controller_pure_pursuit, Bool, queue_size=10) 
@@ -65,8 +65,8 @@ class StateMachine:
 
 		self.danger = 1
 
-	#def callback_another_cat(self, bool_another_car):
-	#	self.another_car=bool_another_car.data
+#	def callback_another_car(self, bool_another_car):
+#		self.another_car=bool_another_car.data
 
     
 	def update_danger(self, danger):
