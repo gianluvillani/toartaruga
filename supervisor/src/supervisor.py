@@ -155,7 +155,7 @@ class StateFollowing(smach.State):
 		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
 		self.sub_other_car = rospy.Subscriber('/another_car', Bool, self.other_car_callback)
 
-		follow_publisher = rospy.get_param(rospy.get_name() + "/command_controller_follow")
+		follow_publisher = rospy.get_param(rospy.get_name() + "/command_controller_follow_topic")
 		self.pub_follow_command = rospy.Publisher(follow_publisher, Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
