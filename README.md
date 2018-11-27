@@ -96,3 +96,24 @@ Launch the obstacle detector
 
 Launch rviz on your local computer;)
 OBS. If you want to visualize obstacles on your laptop be sure to correctly build the obstacle_detector package.
+
+
+### Obstacle emergency stop (Week 3)
+A simple state machine has been implemented that handles the emergency stop and restart of the car when some obstacle is detected. (supervisor_dummy.py). The car is able to stop if an obstacle is detected inside the danger area and restart when the obstacle is not detected anymore.
+The node obstacle_danger_measure (check name) checks all the obstacles and publishes a danger message (Float32). 
+This message is continuosly checked by the state_machine that according to its value outputs the right decisions to the controller.
+
+### Platooning PID (Week 4 - Sunday)
+For the ghost publisher:  
+Keyboard controller 
+
+<code>
+     $  rosrun key_teleop key_teleop.py
+</code>
+
+Simulator, /simulator/odom can be used as a ghost car to be followed                  
+<code>      
+    $  rosrun vehicle_simulation vehicle_simulation.py
+</code>
+
+IN PROGRESS

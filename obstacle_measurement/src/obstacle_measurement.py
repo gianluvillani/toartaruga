@@ -76,7 +76,7 @@ class obstacle_measurement:
 		if x_obs < - math.fabs(0.5*y_obs) and math.fabs(y_obs) <  r_car + r_obs + 0.2 and math.sqrt(x_obs**2 + y_obs**2) < r_car + min_dist:
 			return True
 		else:
-			False
+			return False
 	def publish_danger(self):
 		danger_msg = Float32()
 		circle_obstacle_found = False
