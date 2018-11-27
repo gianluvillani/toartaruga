@@ -2,7 +2,8 @@
 <launch>
 	<node pkg="obstacle_measurement" type="obstacle_measurement.py" name="obstacle_measurement">
 	<param name="obstacles_topic"            value="/obstacles"/>
-	<param name="danger_topic"                   value="/danger"/>
+	<param name="danger_topic"               value="/danger"/>
+	<param name="steer_control_topic"        value="/lli/ctrl_request"/>
 	</node>
 </launch>
 

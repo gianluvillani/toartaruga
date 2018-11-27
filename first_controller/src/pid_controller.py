@@ -207,8 +207,8 @@ if __name__ == "__main__":
 			if my_controller.TRACKING:
 				delta, v = my_controller.compute_velocity_angular()
 				delta_pp = my_controller.compute_delta()		
-				rospy.logerr(" speed = %s, error_dis = %s", v, my_controller.error_dis)		
-				my_controller.publish_control(delta_pp, v)
+				#rospy.logerr(" speed = %s, error_dis = %s", v, my_controller.error_dis)		
+				my_controller.publish_control(delta_pp, 0)
 			else:
 				my_controller.publish_control(delta_pp, 0)
 			rate.sleep()
