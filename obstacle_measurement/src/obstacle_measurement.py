@@ -3,7 +3,7 @@
 import rospy
 import numpy as np
 import math
-from obstacle_detector.msg import Obstacles
+from obstacle_detector.msg import Obstacles, CircleObstacle, SegmentObstacle
 from geometry_msgs.msg import PoseStamped
 from low_level_interface.msg import lli_ctrl_request
 from nav_msgs.msg import Path
@@ -32,16 +32,19 @@ class obstacle_measurement:
 		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_topic')
 		self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
+		self.important_obstacles_topic = rospy.get_param(rospy.get_name() + '/important_obstacles_topic')
 
-		# Publishers and Subscribers
+		# Publishers
 		self.pub_danger = rospy.Publisher(self.danger_top, Float32)
+		self.pub_intersecting_obstacles = rospy.Publisher(self.important_obstacles_topic, CircleObstacle)
+
+		# Subscribers
 		self.sub_obstacles = rospy.Subscriber(self.obstacles_top, Obstacles, self.save_obstacles)
 		self.sub_control = rospy.Subscriber(self.steer_control_top, lli_ctrl_request, self.save_ctrl_state)
 
 	def save_ctrl_state(self, ctrl_msg):
 		self.ctrl_vel = ctrl_msg.velocity
 		self.ctrl_ang = ctrl_msg.steering
-			
 
 	def save_obstacles(self, obstacle_msg):
 		self.obstacle_msg = obstacle_msg
@@ -77,6 +80,7 @@ class obstacle_measurement:
 			return True
 		else:
 			return False
+
 	def publish_danger(self):
 		danger_msg = Float32()
 		circle_obstacle_found = False
@@ -117,10 +121,14 @@ class obstacle_measurement:
 		min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
 
 		r_car = 0.25
-		if middle_point_x < - math.fabs(0.5*middle_point_y) and math.fabs(middle_point_y) <  r_car + 0.2 and ((middle_point_x**2 + middle_point_y**2) < (r_car + min_dist)**2 or (first_point_x**2 + first_point_y**2) < (r_car + min_dist)**2 or (last_point_x**2 + last_point_y**2) < (r_car + min_dist)**2):
+		if middle_point_x < - math.fabs(0.5*middle_point_y) and \
+				math.fabs(middle_point_y) <  r_car + 0.2 and \
+				((middle_point_x**2 + middle_point_y**2) < (r_car + min_dist)**2 or
+				 (first_point_x**2 + first_point_y**2) < (r_car + min_dist)**2 or
+				 (last_point_x**2 + last_point_y**2) < (r_car + min_dist)**2):
 			return True
 		else:
-			False
+			return False
 		
 
 if __name__ == "__main__":
