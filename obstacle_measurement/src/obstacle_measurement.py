@@ -68,7 +68,7 @@ class obstacle_measurement:
 		phi_obs -= rotation_angle
 		
 		x_obs, y_obs = pol2cart(rho_obs, phi_obs)
-		rospy.logerr("after rotation: x = %s, y = %s", x_obs, y_obs)
+		#rospy.logerr("after rotation: x = %s, y = %s", x_obs, y_obs)
 		
 		# Adaptive minimum allowed distance
 		min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
@@ -84,14 +84,14 @@ class obstacle_measurement:
 		for circle in self.circle_obstacles:
 			if self.circle_collision(circle):
 				circle_obstacle_found = True
-		for segment in self.segment_obstacles:
-			if self.segment_collision(segment):
-				segment_obstacle_found = True
-		if circle_obstacle_found or segment_obstacle_found:
+		if circle_obstacle_found:
 			danger_msg.data = 1
 		else:		
 			danger_msg.data = 0
+
+		rospy.logerr('BOH')
 		self.pub_danger.publish(danger_msg)
+		rospy.logerr('ciao')
 
 		
 	def segment_collision(self, segment_obstacle): # A segment_obstacle is a list [(first_point_x, first_point_y), (last_point_x, last_point_y)]
@@ -125,7 +125,7 @@ class obstacle_measurement:
 
 if __name__ == "__main__":
 	rospy.init_node('obstacle_measurement', anonymous=True)
-	rate = rospy.Rate(1)
+	rate = rospy.Rate(10)
 	my_obstacle_measurement = obstacle_measurement()
 	while not rospy.is_shutdown():
 		my_obstacle_measurement.parse_obstacles(my_obstacle_measurement.obstacle_msg)

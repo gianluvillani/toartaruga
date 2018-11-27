@@ -15,12 +15,15 @@ class path_memorization:
 		self.waypoint_top = '/leader/pose'
 		self.sub_waypoint = rospy.Subscriber(self.waypoint_top, PoseStamped, self.update_list)
 		self.pub_waypoint = rospy.Publisher('leader_path', Path)
+		self.count = 0
 	
 
 	def update_list(self, waypoint_msg):
 		self.new_point = waypoint_msg
-		self.leader_past_path.append(waypoint_msg)
-		self.leader_past_path.pop(0)
+		self.count += 1
+		if self.count %5 == 0 :
+			self.leader_past_path.append(waypoint_msg)
+			self.leader_past_path.pop(0)
 	
 	def check_if_none(self):
 		for item in self.leader_past_path:
