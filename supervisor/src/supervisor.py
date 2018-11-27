@@ -176,7 +176,7 @@ class StateFollowing(smach.State):
 				true.data = False # the UGLIEST <3
 				self.pub_follow_command.publish(true) #False
 
-				return 'stopped'
+				return 'stop'
 			if not self.other_car:
 				self.mutex.release()
 				true.data = False
