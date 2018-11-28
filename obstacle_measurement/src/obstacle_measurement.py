@@ -30,10 +30,12 @@ class obstacle_measurement:
 
 		# Access rosparams
 		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_topic')
+		self.des_obstacle_top = rospy.get_param(rospy.get_name() + '/des_obstacle_topic')
 		self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 
 		# Publishers and Subscribers
+		self.pub_des_obstacle = rospy.Publisher(self.des_obstacle_top, Obstacles)
 		self.pub_danger = rospy.Publisher(self.danger_top, Float32)
 		self.sub_obstacles = rospy.Subscriber(self.obstacles_top, Obstacles, self.save_obstacles)
 		self.sub_control = rospy.Subscriber(self.steer_control_top, lli_ctrl_request, self.save_ctrl_state)
@@ -60,7 +62,6 @@ class obstacle_measurement:
 		y_obs = circle_obstacle[1]
 		r_obs = circle_obstacle[2]
 		r_car = 0.25
-		rospy.logerr("before rotation: x = %s, y = %s", x_obs, y_obs)
 
 		rho_obs, phi_obs = cart2pol(x_obs, y_obs)
 		rotation_angle = self.ctrl_ang/100*math.pi/4		
@@ -71,8 +72,8 @@ class obstacle_measurement:
 		#rospy.logerr("after rotation: x = %s, y = %s", x_obs, y_obs)
 		
 		# Adaptive minimum allowed distance
-		min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
-
+		#min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
+		min_dist = self.min_dist
 		if x_obs < - math.fabs(0.5*y_obs) and math.fabs(y_obs) <  r_car + r_obs + 0.2 and math.sqrt(x_obs**2 + y_obs**2) < r_car + min_dist:
 			return True
 		else:
@@ -84,15 +85,18 @@ class obstacle_measurement:
 		for circle in self.circle_obstacles:
 			if self.circle_collision(circle):
 				circle_obstacle_found = True
+				self.obstacle = circle
 		if circle_obstacle_found:
 			danger_msg.data = 1
+
+			des_obstacle_msg = Obstacles()
+			des_obstacle_msg.circles.center.x = circle[0]
+			des_obstacle_msg.circles.center.y = circle[1]
+			des_obstacle_msg.circles.radius = circle[2]
+			self.pub_des_obstacle.publish(des_obstacle_msg)
 		else:		
 			danger_msg.data = 0
-
-		rospy.logerr('BOH')
 		self.pub_danger.publish(danger_msg)
-		rospy.logerr('ciao')
-
 		
 	def segment_collision(self, segment_obstacle): # A segment_obstacle is a list [(first_point_x, first_point_y), (last_point_x, last_point_y)]
 		first_point_x = segment_obstacle[0][0]

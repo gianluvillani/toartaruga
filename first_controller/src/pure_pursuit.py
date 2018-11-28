@@ -41,15 +41,17 @@ class pure_pursuit(controller):
 		# Access rosparams
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
+		self.leader_path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
 		self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 		
 		# Publishers/Subscriber
 		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
-		self.pub_steer_debug = rospy.Publisher('/steering_input', Float32)
+		#self.pub_steer_debug = rospy.Publisher('/steering_input', Float32)
 		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
 		self.sub_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
+		#self.sub_leader_path = rospy.Subscriber(self.leader_path_top, Path, self.save_leader_path)
 		self.sub_start_stop_controller = rospy.Subscriber(self.command_controller_top, Bool, self.start_stop)
 		
 	def start_stop(self, start_stop_msg):
@@ -80,6 +82,10 @@ class pure_pursuit(controller):
 	def save_path(self, path_msg):
 		self.path = path_msg
 		self.path_available = True
+
+	def save_leader_path(self, leader_path_msg):
+		self.leader_path = leader_path_msg
+		self.leader_path_available = True
 
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
@@ -187,7 +193,6 @@ class pure_pursuit(controller):
 
 
 	def compute_velocity(self, delta, ind):
-		# a
 		k = self.ck[ind]
 		k_max = 1/0.2
 		k_min = 0
@@ -208,8 +213,7 @@ if __name__ == "__main__":
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
 				v = my_controller.compute_velocity(delta, ind)
-				my_controller.publish_control(delta, ind, v)
-				print('HEEEERRREEEEE')
+				my_controller.publish_control(delta, ind, 0)
 			else:
 				rospy.loginfo("hej")
 				ind = my_controller.calc_target_index()

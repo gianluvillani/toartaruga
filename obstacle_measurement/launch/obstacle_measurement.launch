@@ -4,6 +4,7 @@
 	<param name="obstacles_topic"            value="/obstacles"/>
 	<param name="danger_topic"               value="/danger"/>
 	<param name="steer_control_topic"        value="/lli/ctrl_request"/>
+	<param name="des_obstacle_topic"               value="/des_obstacle_top"/>
 	</node>
 </launch>
 

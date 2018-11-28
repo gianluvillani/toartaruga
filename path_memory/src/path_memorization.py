@@ -11,10 +11,12 @@ class path_memorization:
 	def __init__(self):
 		self.number_of_point=200
 		self.leader_past_path= [None]*self.number_of_point
-		#self.waypoint_top = rospy.get_param(rospy.get_name() + "/waypoint_topic")
-		self.waypoint_top = '/leader/pose'
+
+		self.waypoint_top = rospy.get_param(rospy.get_name() + "/waypoint_topic")
+		self.leader_path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
+	
 		self.sub_waypoint = rospy.Subscriber(self.waypoint_top, PoseStamped, self.update_list)
-		self.pub_waypoint = rospy.Publisher('leader_path', Path)
+		self.pub_waypoint = rospy.Publisher(self.leader_path_top, Path)
 		self.count = 0
 	
 
@@ -43,7 +45,7 @@ class path_memorization:
 			
 		
 if __name__ == "__main__":
-	rospy.init_node('leader_path_recording')	
+	rospy.init_node('path_memorization')	
 	rate = rospy.Rate(80)
 	my_path = path_memorization()
 	while not rospy.is_shutdown():
