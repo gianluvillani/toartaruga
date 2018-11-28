@@ -7,15 +7,14 @@ from abc import ABCMeta, abstractmethod
 class ControlAlgorithm:
     __metaclass__ = ABCMeta
 
+    '''
+        car_state is always an Odometry message, containing the current position of the car
+        target is whatever the current algorithm needs as input:
+            - a Path for pure pursuit
+            - a Waypoint for PID
+        constraints is future-proofing for any obstacles that the ALGORITHM needs. Will be given as a list of Obstacles.
+            
+    '''
     @abstractmethod
-    # Different models, different update functions
-    def publish_control(self):
-        pass
-
-    @abstractmethod
-    def parse_state(self):
-        pass
-
-    @abstractmethod
-    def parse_path(self):
+    def get_control(self, car_state, target, constraints=None):
         pass
