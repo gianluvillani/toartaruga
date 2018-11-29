@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import math
+import rospy
 import numpy as np
 from control_algorithm import ControlAlgorithm
 from spline_interpolation import Spline2D
@@ -70,7 +71,8 @@ class PurePursuit(ControlAlgorithm):
 		current_index = best_candidate_index
 
 		while current_distance < lookahead_distance:
-			dL = self.point_distance(path[current_index], path[current_index+1 % path_length])
+			rospy.logerr("%s , max index is %s", current_index, len(path))
+			dL = self.point_distance(path[current_index], path[(current_index+1)% path_length])
 			current_distance += dL
 			current_index += 1
 			current_index %= path_length
@@ -93,7 +95,7 @@ class PurePursuit(ControlAlgorithm):
 
 		alpha =  math.atan2(target_point[1] - car_state.get('y'),
 		                    target_point[0] - car_state.get('x'))\
-		         - car_state.get('yaw')
+		         - car_state.get('yaw')[0]
 
 		if reversing:
 			alpha = math.pi - alpha

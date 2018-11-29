@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path
 from low_level_interface.msg import lli_ctrl_request
 from pure_pursuit import PurePursuit
 from pid_control import PidControl
@@ -11,7 +12,7 @@ class Dispatcher:
 
 	def __init__(self, rate=30):
 		self.available_controls = {'pid':self.init_pid, 'pure_pursuit':self.init_pp, 'stop':self.init_stop}
-		self.current_control_key = rospy.get_param(rospy.get_name() + 'chosen_control')
+		self.current_control_key = rospy.get_param(rospy.get_name() + '/selected_controller')
 		self.rate = rospy.Rate(rate)
 
 		self.algorithm = None
@@ -22,11 +23,11 @@ class Dispatcher:
 		self.switch_control(self.current_control_key)
 
 		#Subscribers
-		self.sub_car_state = rospy.Subscriber(rospy.get_param(rospy.get_name() + 'car_pose_topic'), self.car_state_callback)
+		self.sub_car_state = rospy.Subscriber(rospy.get_param('/dispatcher/car_pose_topic'), PoseStamped, self.car_state_callback)
 		self.sub_control_target = None
 
 		#Publishers
-		self.pub_control_signal = rospy.Publisher(rospy.get_param(rospy.get_name() + 'control_signal_topic'), lli_ctrl_request)
+		self.pub_control_signal = rospy.Publisher(rospy.get_param('/dispatcher/control_signal_topic'), lli_ctrl_request)
 
 	'''
 		Runs the new initialization for the new algorithm.
@@ -51,14 +52,14 @@ class Dispatcher:
 		Initializes pid.
 	'''
 	def init_pid(self):
-		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + 'waypoint_topic'), self.control_target_callback)
+		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/waypoint_topic'), PoseStamped, self.control_target_callback)
 		self.algorithm = PidControl()
 
 	'''
 		Initializes pure pursuit.
 	'''
 	def init_pp(self):
-		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + 'path_topic'), self.control_target_callback)
+		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/path_topic'), Path, self.control_target_callback)
 		self.algorithm = PurePursuit()
 
 	'''
@@ -74,3 +75,7 @@ class Dispatcher:
 
 	def control_target_callback(self, msg):
 		self.control_target = msg
+
+if __name__=='__main__':
+	rospy.init_node('dispatcher', anonymous=True)
+	rospy.spin()
