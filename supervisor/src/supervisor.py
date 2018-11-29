@@ -6,7 +6,7 @@ import smach_ros
 from std_msgs.msg import Float32, Bool
 from nav_msgs.msg import Path
 import threading
-from std_srvs.srv import Empty
+from control_hierarchy.dispatcher import Dispatcher
 
 
 class StateIdle(smach.State):
@@ -69,7 +69,6 @@ class StateRunning(smach.State):
 		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
 		self.sub_follow = rospy.Subscriber('/another_car', Bool, self.other_car_callback)
 
-		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
 		self.threshold = 0.8
@@ -77,23 +76,16 @@ class StateRunning(smach.State):
 		self.other_car = False
 
 	def execute(self, ud):
-		start_stop_msg = Bool()
-		start_stop_msg.data = True
-		self.pub_start_stop_controller.publish(start_stop_msg)
 
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
-
+			ud.dispatcher.publish_control()
 			if self.danger > self.threshold:
 				self.mutex.release()
-				start_stop_msg.data = False
-				self.pub_start_stop_controller.publish(start_stop_msg)
 				return 'stop'
 
 			if self.other_car:
 				self.mutex.release()
-				start_stop_msg.data = False
-				self.pub_start_stop_controller.publish(start_stop_msg)
 				return 'follow'
 
 			self.mutex.release()
@@ -155,8 +147,6 @@ class StateFollowing(smach.State):
 		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
 		self.sub_other_car = rospy.Subscriber('/another_car', Bool, self.other_car_callback)
 
-		follow_publisher = rospy.get_param(rospy.get_name() + "/command_controller_follow_topic")
-		self.pub_follow_command = rospy.Publisher(follow_publisher, Bool)
 		self.mutex = threading.Lock()
 		self.danger = 0.0
 		self.threshold = 0.5
@@ -164,23 +154,16 @@ class StateFollowing(smach.State):
 		self.other_car = True
 
 	def execute(self, ud):
-		true = Bool()
-		true.data = True
-		self.pub_follow_command.publish(true)
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
-
+			ud.dispatcher.publish_control()
 			if self.danger > self.threshold:
 				self.mutex.release()
 
-				true.data = False # the UGLIEST <3
-				self.pub_follow_command.publish(true) #False
 
 				return 'stop'
 			if not self.other_car:
 				self.mutex.release()
-				true.data = False
-				self.pub_follow_command.publish(true)
 				return 'idle'
 
 			self.mutex.release()
@@ -204,6 +187,7 @@ if __name__ == "__main__":
 	#rospy.wait_for_service("/Stop_pure_pursuit")
 
 	sm = smach.StateMachine(outcomes=[])
+	sm.userdata.dispatcher=Dispatcher()
 	with sm:
 		smach.StateMachine.add('StateIdle', StateIdle(),
 		                       transitions={'run': 'StateRunning', 'stop': 'StateStopped', 'follow':'StateFollowing'})
