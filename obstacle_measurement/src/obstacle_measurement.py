@@ -24,7 +24,7 @@ class obstacle_measurement:
 		self.obstacle_msg = Obstacles()
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
-		self.min_dist = 0.5
+		self.min_dist = 1
 		self.ctrl_vel = 0
 		self.ctrl_ang = 0
 
@@ -35,7 +35,7 @@ class obstacle_measurement:
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 
 		# Publishers and Subscribers
-		self.pub_des_obstacle = rospy.Publisher(self.des_obstacle_top, Obstacles)
+		self.pub_des_obstacle = rospy.Publisher(self.des_obstacle_top, PoseStamped)
 		self.pub_danger = rospy.Publisher(self.danger_top, Float32)
 		self.sub_obstacles = rospy.Subscriber(self.obstacles_top, Obstacles, self.save_obstacles)
 		self.sub_control = rospy.Subscriber(self.steer_control_top, lli_ctrl_request, self.save_ctrl_state)
@@ -74,7 +74,7 @@ class obstacle_measurement:
 		# Adaptive minimum allowed distance
 		#min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
 		min_dist = self.min_dist
-		if x_obs < - math.fabs(0.5*y_obs) and math.fabs(y_obs) <  r_car + r_obs + 0.2 and math.sqrt(x_obs**2 + y_obs**2) < r_car + min_dist:
+		if x_obs < - math.fabs(0.1*y_obs) and math.fabs(y_obs) <  r_car + r_obs + 0.5 and math.sqrt(x_obs**2 + y_obs**2) < r_car + min_dist:
 			return True
 		else:
 			return False
@@ -89,11 +89,12 @@ class obstacle_measurement:
 		if circle_obstacle_found:
 			danger_msg.data = 1
 
-			des_obstacle_msg = Obstacles()
-			des_obstacle_msg.circles.center.x = circle[0]
-			des_obstacle_msg.circles.center.y = circle[1]
-			des_obstacle_msg.circles.radius = circle[2]
+			des_obstacle_msg = PoseStamped()
+			des_obstacle_msg.pose.position.x = self.obstacle[0]
+			des_obstacle_msg.pose.position.y = self.obstacle[1]
+			des_obstacle_msg.pose.position.z = self.obstacle[2]
 			self.pub_des_obstacle.publish(des_obstacle_msg)
+
 		else:		
 			danger_msg.data = 0
 		self.pub_danger.publish(danger_msg)
