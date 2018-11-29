@@ -151,7 +151,6 @@ class pure_pursuit(controller):
 	    	ind = d.index(min(d))
 		
 		#ind = new_ind
-
 		
 	    	L = 0.0
 	    	Lf = self.k * self.v + self.lf
