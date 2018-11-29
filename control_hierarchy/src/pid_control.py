@@ -4,6 +4,7 @@ import rospy
 import math
 from control_algorithm import ControlAlgorithm
 
+
 class PidControl(ControlAlgorithm):
 
 	def __init__(self):
