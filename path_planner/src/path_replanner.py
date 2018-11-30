@@ -188,25 +188,24 @@ class Replanner:
 		self.cx = list(x)
 		self.cy = list(y)
 
+	def closest_index(self,x,y):
+		dx = [x - icx for icx in self.cx]
+		dy = [y - icy for icy in self.cy]
+	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+		return d.index(min(d)), min(d)
+
 	def find_indices(self):
 		"""
 		Obtains indices of where the old map should be replaced.
 		"""
 		distance = math.sqrt((self.x_car - self.x_obstacle_global)**2 + (self.y_car - self.y_obstacle_global)**2)
-		dx_car = [self.x_car - icx for icx in self.cx]
-		dy_car = [self.y_car - icy for icy in self.cy]
-	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx_car, dy_car)]
-		start_index = d.index(min(d))
-		dx_obstacle = [self.x_obstacle_global - icx for icx in self.cx]
-		dy_obstacle = [self.y_obstacle_global - icy for icy in self.cy]
-	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx_obstacle, dy_obstacle)]
-		obstacle_index = d.index(min(d))
-		dist = min(d)
-		stop_index = (2*obstacle_index - start_index) % len(self.cx)
+		car_index, _ = self.closest_index(self.x_car,self.y_car)
+		obstacle_index, dist = self.closest_index(self.x_obstacle_global,self.y_obstacle_global)
+		stop_index = (2*obstacle_index - car_index) % len(self.cx)
 		self.obs = obstacle_index
 
-		rospy.logerr("start_index=%s, stop_index=%s, cx=%s, cy=%s, obstacle_index=%s", start_index, stop_index, self.cx[obstacle_index], self.cy[obstacle_index], obstacle_index)
-		return start_index, obstacle_index, stop_index, dist
+		rospy.logerr("start_index=%s, stop_index=%s, cx=%s, cy=%s, obstacle_index=%s", car_index, stop_index, self.cx[obstacle_index], self.cy[obstacle_index], obstacle_index)
+		return car_index, obstacle_index, stop_index, dist
 	
 	def get_waypoint_direction(self, obs_ind):
 		"""
@@ -239,7 +238,7 @@ class Replanner:
 		if direction == 'clockwise':
 			waypoint_direction *= -1
 
-		return waypoint_direction
+		return -waypoint_direction
 
 
 		
@@ -252,16 +251,16 @@ class Replanner:
 		self.new_cy = []
 		start_index, obstacle_index, stop_index, dist = self.find_indices()
 		waypoint_direction = self.get_waypoint_direction(obstacle_index)
-		new_waypoint = np.array([self.x_obstacle_global, self.y_obstacle_global]) + waypoint_direction*(self.r + self.safety_distance)
+		new_waypoint = np.array([self.x_obstacle_global, self.y_obstacle_global]) + waypoint_direction * (self.r + self.safety_distance)
 		x_points = [self.cx[start_index], new_waypoint[0], self.cx[stop_index]]
 		y_points = [self.cy[start_index], new_waypoint[1], self.cy[stop_index]]
-		cx, cy = self.spline_waypoints(x_points, y_points)
+		sx, sy = self.spline_waypoints(x_points, y_points)
 		if stop_index < start_index:
-			self.new_cx = self.cx[:start_index] + cx + self.cx[stop_index:start_index]
-			self.new_cy = self.cy[:start_index] + cy + self.cy[stop_index:start_index]
+			self.new_cx = self.cx[stop_index:start_index] + sx
+			self.new_cy = self.cy[stop_index:start_index] + sy
 		else:
-			self.new_cx = self.cx[:start_index] + cx + self.cx[stop_index:]
-			self.new_cy = self.cy[:start_index] + cy + self.cy[stop_index:]
+			self.new_cx = self.cx[:start_index] + sx + self.cx[stop_index:]
+			self.new_cy = self.cy[:start_index] + sy + self.cy[stop_index:]
 		
 
 		
