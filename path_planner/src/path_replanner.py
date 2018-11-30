@@ -30,7 +30,7 @@ class Replanner:
 		#self.y_car = y_car
 		self.x_obstacle_global = 0
 		self.y_obstacle_global = 0
-		#self.r = r
+		self.r = 1
 		self.safety_distance = safety_distance
 		self.get_course()
 		self.obstacle_passed = True
@@ -72,6 +72,7 @@ class Replanner:
 		self.obstacle_msg = obstacle_msg
 
 	def save_des_obstacle(self, des_obstacle_msg):
+		
 		self.x_obstacle = des_obstacle_msg.pose.position.x
 		self.y_obstacle = des_obstacle_msg.pose.position.y
 		self.r = des_obstacle_msg.pose.position.z
@@ -87,19 +88,19 @@ class Replanner:
 			self.circle_obstacles.append((circle.center.x , circle.center.y, circle.radius))
 
 	def transform_des_obstacle_frame(self):
-		
-			alpha = math.atan2(self.y_obstacle, self.x_obstacle)
-			theta = math.pi + self.yaw_car
-			rho = math.sqrt(self.x_obstacle**2 + self.y_obstacle**2)
-			self.x_obstacle_global = self.x_car + rho*math.cos(alpha + theta)
-			self.y_obstacle_global = self.y_car + rho*math.sin(alpha + theta)				
+			if self.state_available:
+				alpha = math.atan2(self.y_obstacle, self.x_obstacle)
+				theta = math.pi + self.yaw_car
+				rho = math.sqrt(self.x_obstacle**2 + self.y_obstacle**2)
+				self.x_obstacle_global = self.x_car + rho*math.cos(alpha + theta)
+				self.y_obstacle_global = self.y_car + rho*math.sin(alpha + theta)				
 			
-			marker_msg = PoseStamped()
-			marker_msg.header.frame_id = 'qualisys'
-			marker_msg.pose.position.x = self.x_obstacle_global
-			marker_msg.pose.position.y = self.y_obstacle_global
+				marker_msg = PoseStamped()
+				marker_msg.header.frame_id = 'qualisys'
+				marker_msg.pose.position.x = self.x_obstacle_global
+				marker_msg.pose.position.y = self.y_obstacle_global
 	
-			self.pub_marker.publish(marker_msg)
+				self.pub_marker.publish(marker_msg)
 		
 	
 	def transform_obstacles_frame(self):
@@ -324,7 +325,7 @@ plt.show()
 
 if __name__ == '__main__':
 	rospy.init_node('path_replanner')
-	a = Replanner(safety_distance = 0.3)
+	a = Replanner(safety_distance = 0.1)
 	rate = rospy.Rate(20)
 	while not rospy.is_shutdown():
 		if a.path_available and a.state_available:
