@@ -107,13 +107,6 @@ class PurePursuit(ControlAlgorithm):
 
 		return delta
 
-	'''
-	angle: float in range -pi/4, pi/4
-	
-	returns: int in range -100,100
-	'''
-	def calculate_steering_signal(self, angle):
-		return angle * (400 / math.pi)
 
 	'''
 		reference_curvature: float

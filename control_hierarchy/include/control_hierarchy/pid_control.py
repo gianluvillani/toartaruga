@@ -3,6 +3,7 @@
 import rospy
 import math
 from control_algorithm import ControlAlgorithm
+from low_level_interface.msg import lli_ctrl_request
 
 
 class PidControl(ControlAlgorithm):
@@ -13,7 +14,7 @@ class PidControl(ControlAlgorithm):
 		self.error_yaw = 0
 		self.old_error_yaw = 0
 
-		self.error_i_distance = 0
+		self.error_I_distance = 0
 		self.error_distance = 0
 		self.old_error_distance = 0
 
@@ -26,8 +27,19 @@ class PidControl(ControlAlgorithm):
 	Outputs:
 		lli_control_request
 	'''
-	def get_control(self, car_state, target, constraints=None):
-		pass
+	def get_control(self, car_state, target, parameters={'Ts':0.0125, 'target_distance':0,
+	                                                     'K_yaw_P':1, 'K_yaw_D':0, 'K_yaw_I':0,
+	                                                     'd_des':1,
+	                                                     'K_dis_P':1, 'K_dis_D':0, 'K_dis_I':0}):
+		self.parameters = parameters
+		x, y, yaw = self.pose_to_xy_yaw(car_state)
+		target_x, target_y, target_yaw = self.pose_to_xy_yaw(target)
+		delta, v = self.compute_velocity_angular(x, y, yaw, target_x, target_y)
+		ctrl_request = lli_ctrl_request()
+		ctrl_request.steering = self.calculate_steering_signal(delta)
+		ctrl_request.velocity = v
+
+		return ctrl_request
 
 	def update_error_i(self):
 		self.error_i_yaw += self.error_yaw * self.parameters['Ts']

@@ -46,3 +46,13 @@ class ControlAlgorithm:
         yaw = euler_from_quaternion(orientation_list)
 
         return {'x': x, 'y': y, 'yaw': yaw}
+
+    '''
+    angle: float in range -pi/4, pi/4
+
+    returns: int in range -100,100
+    '''
+
+    def calculate_steering_signal(self, angle):
+        return angle * (400 / math.pi)
+
