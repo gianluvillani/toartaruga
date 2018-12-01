@@ -145,14 +145,14 @@ class obstacle_measurement:
 		danger_msg = Float32()
 		obstacle_found = False
 		for i in range(len(self.obstacle_points)):
-			x = self.obstacle_points[0]
-			y = self.obstacle_points[1]
+			x = self.obstacle_points[i][0]
+			y = self.obstacle_points[i][1]
 			if self.in_danger_zone(x,y):
 				obstacle_found = True
 		if obstacle_found:
 			danger_msg.data = 1
 		else:
-			dange_msg.data = 0
+			danger_msg.data = 0
 		self.pub_danger.publish(danger_msg)
 		
 	def segment_collision(self, segment_obstacle): # A segment_obstacle is a list [(first_point_x, first_point_y), (last_point_x, last_point_y)]		
@@ -189,6 +189,7 @@ class obstacle_measurement:
 
 
 	def in_danger_zone(self,x_obs, y_obs):
+		r_car = 0.25
 		if x_obs < - math.fabs(0.5*y_obs) and math.fabs(y_obs) <  r_car + 0.5 and math.sqrt(x_obs**2 + y_obs**2) < r_car + self.min_dist:
 			return True
 		else:
