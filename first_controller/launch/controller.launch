@@ -8,7 +8,7 @@
 	<param name="leader_path_topic"                    value="/leader_path"/>
 	<param name="waypoint_topic"                       value="/leader/pose"/> 
 	<param name="command_controller_topic"             value="/start_stop_controller"/>
-	<param name="/command_controller_follow_topic"     value="/start_stop_follow"/>
+	<param name="command_controller_follow_topic"     value="/start_stop_follow"/>
 	</node>
 </launch>
 

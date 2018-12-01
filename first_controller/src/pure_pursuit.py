@@ -216,7 +216,7 @@ if __name__ == "__main__":
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
 				v = my_controller.compute_velocity(delta, ind)
-				my_controller.publish_control(delta, ind, 18)
+				my_controller.publish_control(delta, ind, 20)
 			else:
 				rospy.loginfo("hej")
 				ind = my_controller.calc_target_index()

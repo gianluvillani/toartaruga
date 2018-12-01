@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+	<include file="$(find rplidar_ros)/launch/rplidar.launch" />
+	<include file="$(find obstacle_detector)/launch/nodes.launch" />
 	<node pkg="obstacle_measurement" type="obstacle_measurement.py" name="obstacle_measurement">
-	<param name="obstacles_topic"            value="/obstacles"/>
-	<param name="danger_topic"               value="/danger"/>
-	<param name="steer_control_topic"        value="/lli/ctrl_request"/>
-	<param name="des_obstacle_topic"               value="/des_obstacle_top"/>
+	<param name="obstacles_topic"            	 value="/obstacles"/>
+	<param name="danger_topic"              	 value="/danger"/>
+	<param name="steer_control_topic"       	 value="/lli/ctrl_request"/>
+	<param name="des_obstacle_topic"              	 value="/des_obstacle_top"/>
+	<param name="car_pose_topic"                     value="/SVEA2/pose"/>
+	<param name="laser_scan_topic"                     	 value="/scan"/>
 	</node>
 </launch>
 

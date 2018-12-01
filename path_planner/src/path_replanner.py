@@ -3,6 +3,7 @@
 import tf
 import tf2_ros
 import rospy
+import operator
 import math
 import numpy as np
 import geometry_msgs.msg
@@ -36,7 +37,10 @@ class Replanner:
 		self.obstacle_passed = True
 		self.path_available = False
 		self.state_available = False
+		self.obstacles_available = False
 		self.danger = 0
+		self.circle_obstacles_global = []
+		self.triggered_change = 0
 
 		# Access rosparams
 		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_topic')
@@ -70,6 +74,7 @@ class Replanner:
 
 	def save_obstacles(self, obstacle_msg):
 		self.obstacle_msg = obstacle_msg
+		self.obstacles_available = True
 
 	def save_des_obstacle(self, des_obstacle_msg):
 		
@@ -86,6 +91,7 @@ class Replanner:
 			self.segment_obstacles.append([(segment.first_point.x, segment.first_point.y), (segment.last_point.x, segment.last_point.y)])
 		for circle in obstacle_msg.circles:
 			self.circle_obstacles.append((circle.center.x , circle.center.y, circle.radius))
+		self.transform_obstacles_frame()
 
 	def transform_des_obstacle_frame(self):
 			if self.state_available:
@@ -104,17 +110,20 @@ class Replanner:
 		
 	
 	def transform_obstacles_frame(self):
-		self.circle_obstacles_global = []
+		self.circle_obstacles_global = {}
 		if self.state_available:
 			for obstacle in self.circle_obstacles:
 				x_obstacle = obstacle[0]
-				y_obstacle = obstacle[1]			
-				alpha = math.atan2(self.y_obstacle, self.x_obstacle)
+				y_obstacle = obstacle[1]
+				radius = obstacle[2]		
+				alpha = math.atan2(y_obstacle, x_obstacle)
 				theta = math.pi + self.yaw_car
-				rho = math.sqrt(self.x_obstacle**2 + self.y_obstacle**2)
+				rho = math.sqrt(x_obstacle**2 + y_obstacle**2)
 				x_obstacle_global = self.x_car + rho*math.cos(alpha + theta)
 				y_obstacle_global = self.y_car + rho*math.sin(alpha + theta)
-				self.circle_obstaclels_global.append((x_obstacle_global,y_obstacle_global,obstacle[2]))
+				index_path, _ = self.closest_index(x_obstacle_global,y_obstacle_global)
+				if self.new_path1000(x_obstacle,y_obstacle,radius):
+					self.circle_obstacles_global[(x_obstacle_global,y_obstacle_global,obstacle[2])] =  index_path
 	
 
 	def parse_state(self, state_msg):
@@ -129,18 +138,21 @@ class Replanner:
 			self.obstacle_passed = True
 			
 	def check_obstacle_passed1(self):
-		dx_car = [self.x_car - icx for icx in self.cx]
-		dy_car = [self.y_car - icy for icy in self.cy]
-	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx_car, dy_car)]
+		obstacle_index, _ = self.closest_index(self.x_obstacle_global, self.y_obstacle_global)
+		car_index, _ = self.closest_index(self.x_car, self.y_car)
+		if car_index - obstacle_index:
+			pass
 		
-	def new_path1(self):
+	def new_path1000(self,x_obstacle_global, y_obstacle_global, radius):
 		"""
 		Returns True if a new path should be created.
 		"""
 		close_obstacle = False
 		obstacle_on_path = False
 		for x, y in zip(self.cx, self.cy):
-			if math.sqrt((x - self.x_obstacle_global) ** 2 + (y - self.y_obstacle_global) ** 2) < 0.3 + self.r: #self.r + self.safety_distance:
+
+			if math.sqrt((x - x_obstacle_global) ** 2 + (y - y_obstacle_global) ** 2) < 1.5: #self.r + self.safety_distance:
+				rospy.logerr("x_obs = %s, y_obs = %s, d=%s", x_obstacle_global, y_obstacle_global,math.sqrt((x - x_obstacle_global) ** 2 + (y - y_obstacle_global) ** 2))
 				obstacle_on_path = True
 				break
 		return obstacle_on_path
@@ -241,8 +253,15 @@ class Replanner:
 		return -waypoint_direction
 
 
-		
-		
+	def sort_obstacle_index(self):
+		car_index, _ = self.closest_index(self.x_car,self.y_car)
+		for key, value in self.circle_obstacles_global.items(): #in py2 iteritems()
+			self.circle_obstacles_global[key] = (value - car_index) % len(self.cx)
+
+		sorted_obstacles = sorted(self.circle_obstacles_global.items(), key = operator.itemgetter(1))
+		return sorted_obstacles				
+
+
 	def get_new_path(self):
 		"""
 		Replaces old path with new path avoiding the obstacle
@@ -250,6 +269,7 @@ class Replanner:
 		self.new_cx = []
 		self.new_cy = []
 		start_index, obstacle_index, stop_index, dist = self.find_indices()
+		self.triggered_change = start_index
 		waypoint_direction = self.get_waypoint_direction(obstacle_index)
 		new_waypoint = np.array([self.x_obstacle_global, self.y_obstacle_global]) + waypoint_direction * (self.r + self.safety_distance)
 		x_points = [self.cx[start_index], new_waypoint[0], self.cx[stop_index]]
@@ -263,7 +283,32 @@ class Replanner:
 			self.new_cy = self.cy[:start_index] + sy + self.cy[stop_index:]
 		
 
-		
+	def get_new_path2(self):
+		sorted_obstacles = self.sort_obstacle_index()
+		start_index, _ = self.closest_index(self.x_car,self.y_car)
+		self.new_cx = []
+		self.new_cy = []
+		new_waypoint_x = [self.x_car]
+		new_waypoint_y = [self.y_car]
+		for obstacle in sorted_obstacles:
+			x_obstacle_global = obstacle[0][0]
+			y_obstacle_global = obstacle[0][1]
+			radius = obstacle[0][2]
+			obstacle_index = self.circle_obstacles_global[obstacle[0]]
+			waypoint_direction = self.get_waypoint_direction(obstacle_index)
+			new_waypoint = np.array([x_obstacle_global, y_obstacle_global]) + waypoint_direction * (radius + self.safety_distance)
+			new_waypoint_x.append(new_waypoint[0])
+			new_waypoint_y.append(new_waypoint[1])
+		rospy.logerr("length of x= %s,sorted_obstavcles = %s", len(new_waypoint_x), len(sorted_obstacles))
+		sx, sy = self.spline_waypoints(new_waypoint_x, new_waypoint_y)
+		stop_index = (obstacle_index + 20) % len(self.cx)
+		if stop_index < start_index:
+			self.new_cx = self.cx[stop_index:start_index] + sx
+			self.new_cy = self.cy[stop_index:start_index] + sy
+		else:
+			self.new_cx = self.cx[:start_index] + sx + self.cx[stop_index:]
+			self.new_cy = self.cy[:start_index] + sy + self.cy[stop_index:]
+
 	
 	def spline_waypoints(self, x, y):
 		"""
@@ -324,7 +369,7 @@ plt.show()
 
 if __name__ == '__main__':
 	rospy.init_node('path_replanner')
-	a = Replanner(safety_distance = 0.1)
+	a = Replanner(safety_distance = 0.2)
 	rate = rospy.Rate(20)
 	while not rospy.is_shutdown():
 		if a.path_available and a.state_available:
@@ -344,6 +389,28 @@ if __name__ == '__main__':
 				path_msg = a.coordinates_to_msg(a.cx, a.cy)
 			a.pub_path.publish(path_msg)
 			rate.sleep()
+
+
+'''
+if __name__ == '__main__':
+	rospy.init_node('path_replanner')
+	a = Replanner(safety_distance = 0.5)
+	rate = rospy.Rate(20)
+	while not rospy.is_shutdown():
+		if a.path_available and a.state_available and a.obstacles_available:
+			a.parse_state(a.state)
+			a.parse_path(a.path)
+			a.parse_obstacles(a.obstacle_msg)
+			if len(a.circle_obstacles_global) > 0:			
+				rospy.logerr("len of cirles = %s",len(a.obstacle_msg.circles))
+				a.get_new_path2()
+				path_msg = a.coordinates_to_msg(a.new_cx, a.new_cy)
+			else:
+				path_msg = a.coordinates_to_msg(a.cx, a.cy)
+			a.pub_path.publish(path_msg)
+		rate.sleep()
+
+'''
 
 
 
