@@ -108,7 +108,6 @@ class obstacle_measurement:
 		phi_obs -= rotation_angle
 		
 		x_obs, y_obs = pol2cart(rho_obs, phi_obs)
-		#rospy.logerr("after rotation: x = %s, y = %s", x_obs, y_obs)
 		
 		# Adaptive minimum allowed distance
 		#min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
