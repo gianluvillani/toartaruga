@@ -42,10 +42,9 @@ class pure_pursuit(controller):
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.replanner_path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
-		#self.leader_path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
+		#self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
 		self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
-		self.pub_marker = rospy.Publisher('/lookahead', PoseStamped)
 		
 		# Publishers/Subscriber
 		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
@@ -55,6 +54,7 @@ class pure_pursuit(controller):
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
 		#self.sub_leader_path = rospy.Subscriber(self.leader_path_top, Path, self.save_leader_path)
 		self.sub_start_stop_controller = rospy.Subscriber(self.command_controller_top, Bool, self.start_stop)
+		self.pub_marker = rospy.Publisher('/lookahead', PoseStamped)
 	
 		
 	def start_stop(self, start_stop_msg):
@@ -87,13 +87,14 @@ class pure_pursuit(controller):
 
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
-		#print "PATH PUBLISHED"				
-		cx = []
-		cy = []
-		ck = []
+
+		self.cx = []
+		self.cy = []
+		#ck = []
 		for pose in path_msg.poses:
-			cx.append(pose.pose.position.x)
-			cy.append(pose.pose.position.y)
+			self.cx.append(pose.pose.position.x)
+			self.cy.append(pose.pose.position.y)
+		'''
 		sp = Spline2D(cx, cy)
     		s = np.arange(0, sp.s[-1], 0.01)
 		cx = []
@@ -106,6 +107,8 @@ class pure_pursuit(controller):
 		self.cx = cx
 		self.cy = cy
 		self.ck = ck
+		'''
+		rospy.logerr("in pure pusuit path length --------------------------------: %s",len(self.cx))
 		
 	def publish_control(self, steering_degree, target_ind, velocity):
 		linear_control = velocity	#check the map to vel
@@ -115,8 +118,8 @@ class pure_pursuit(controller):
 		ctrl_request_msg.velocity = int(linear_control)
 		ctrl_request_msg.steering = int(angular_control)
 		self.pub_steer_control.publish(ctrl_request_msg)
-		msg = Float32()
-		msg.data = angular_control
+		#msg = Float32()
+		#msg.data = angular_control
 		#self.pub_steer_debug.publish(msg)
 		#self.save_data(target_ind, steering_degree, linear_control)	
 	
@@ -127,7 +130,7 @@ class pure_pursuit(controller):
 
 	def calc_target_index(self):
 	    
-	    ind = None
+	    ind = 0
 	    # search nearest point index
 	    if len(self.cx)!=0:
 	    	dx = [self.x - icx for icx in self.cx]
@@ -140,7 +143,6 @@ class pure_pursuit(controller):
 			new_ind = d.index(min(d))
 			self.counter += 1
 			self.last_nearest_index
-			print(self.last_nearest_index)
 		else:
 			new_d = d[self.last_nearest_index:self.last_nearest_index + len(self.cx)//5]
 			
@@ -172,8 +174,6 @@ class pure_pursuit(controller):
 	    return ind
 
 	def compute_delta(self,ind):
-	    if ind ==None:
-		return 0
 	    tx = self.cx[ind]
 	    ty = self.cy[ind]
 	    lookahead = PoseStamped()
@@ -216,8 +216,8 @@ if __name__ == "__main__":
 #				rospy.loginfo(str(v))
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
-				v = my_controller.compute_velocity(delta, ind)
-				my_controller.publish_control(delta, ind, v)
+				#v = my_controller.compute_velocity(delta, ind)
+				my_controller.publish_control(delta, ind, 20)
 			else:
 				ind = my_controller.calc_target_index()
                                 delta = my_controller.compute_delta(ind)

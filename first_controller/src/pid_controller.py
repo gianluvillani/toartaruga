@@ -38,7 +38,7 @@ class pid_controller(controller):
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.waypoint_top = rospy.get_param(rospy.get_name() + "/waypoint_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
 		self.command_controller_follow_top = rospy.get_param(rospy.get_name() + "/command_controller_follow_topic")
 
 		# Publishers/Subscriber
@@ -201,8 +201,8 @@ if __name__ == "__main__":
 	rate = rospy.Rate(80)
 	#rospy.logerr("%s MAIN STARTED")
 	while not rospy.is_shutdown():
-		if my_controller.state_available and my_controller.waypoint_available:
-	  		my_controller.parse_waypoint(my_controller.waypoint)
+		if my_controller.state_available and my_controller.path_available:
+	  		my_controller.parse_path(my_controller.path)
 	    		my_controller.parse_state(my_controller.state)
 			if my_controller.TRACKING:
 				delta, v = my_controller.compute_velocity_angular()

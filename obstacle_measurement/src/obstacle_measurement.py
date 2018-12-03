@@ -25,7 +25,7 @@ class obstacle_measurement:
 		self.obstacle_msg = Obstacles()
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
-		self.min_dist = 1
+		self.min_dist = 0.5
 		self.ctrl_vel = 0
 		self.ctrl_ang = 0
 		self.scan_available = False

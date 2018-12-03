@@ -12,6 +12,7 @@ class path_memorization:
 		self.number_of_point=200
 		self.leader_past_path= [None]*self.number_of_point
 
+
 		self.waypoint_top = rospy.get_param(rospy.get_name() + "/waypoint_topic")
 		self.leader_path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
 	
@@ -23,33 +24,32 @@ class path_memorization:
 	def update_list(self, waypoint_msg):
 		self.new_point = waypoint_msg
 		self.count += 1
-		if self.count %5 == 0 :
-			self.leader_past_path.append(waypoint_msg)
-			self.leader_past_path.pop(0)
+		#if self.count %5 == 0 :
+		self.leader_past_path.append(waypoint_msg)
+		self.leader_past_path.pop(0)
+		rospy.logerr ('len= %s', len(self.leader_past_path))
 	
 	def check_if_none(self):
 		for item in self.leader_past_path:
         		if item == None:
-            			return False
+				return False
     		return True
 		
 	def publish_leader_path(self):
 		path_msg= Path()
 		path_msg.header.frame_id = 'qualisys'
-		if self.check_if_none:
-			for waypoint in self.leader_past_path:
-				path_msg.poses.append(waypoint)
-			self.pub_waypoint.publish(path_msg)
-		else: 
-			pass
+		for waypoint in self.leader_past_path:
+			path_msg.poses.append(waypoint)
+		self.pub_waypoint.publish(path_msg)
 			
 		
 if __name__ == "__main__":
 	rospy.init_node('path_memorization')	
-	rate = rospy.Rate(80)
+	rate = rospy.Rate(100)
 	my_path = path_memorization()
 	while not rospy.is_shutdown():
-		my_path.publish_leader_path()
+		if my_path.check_if_none():
+			my_path.publish_leader_path()
 		rate.sleep()
 
 
