@@ -3,6 +3,8 @@
 import math
 from abc import ABCMeta, abstractmethod
 from tf.transformations import euler_from_quaternion
+from obstacle_detector.msg import Obstacles, CircleObstacle, SegmentObstacle
+from geometry_msgs.msg import Point
 
 
 # Abstract class for handling several controllers
@@ -83,6 +85,12 @@ class ControlAlgorithm:
             rho = math.sqrt(x_obstacle ** 2 + y_obstacle ** 2)
             x_obstacle_global = car_state['x'] + rho * math.cos(alpha + theta)
             y_obstacle_global = car_state['y'] + rho * math.sin(alpha + theta)
-            circle_obstacles_global.append((x_obstacle_global, y_obstacle_global, obstacle.true_radius))
+            obstacle_msg = CircleObstacle()
+            obstacle_msg.center = Point()
+            obstacle_msg.center.x = x_obstacle_global
+            obstacle_msg.center.y = y_obstacle_global
+            obstacle_msg.true_radius = obstacle.true_radius
+            obstacle_msg.radius = obstacle.radius
+            circle_obstacles_global.append(obstacle_msg)
 
         return circle_obstacles_global
