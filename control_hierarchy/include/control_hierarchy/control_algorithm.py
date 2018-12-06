@@ -33,6 +33,17 @@ class ControlAlgorithm:
         return math.sqrt(dx**2 + dy**2)
 
     '''
+    point_a, point_b: geometry_msgs/Point
+    
+    returns: float: the distance between the points
+    '''
+    def point_msg_distance(self, point_a, point_b):
+        dx = point_a.x - point_b.x
+        dy = point_a.y - point_b.y
+
+        return math.sqrt(dx**2 + dy**2)
+
+    '''
     Takes in a Pose message as the state.
 
     Returns a dictionary {'x', 'y', 'yaw'} of the same state.
@@ -56,3 +67,22 @@ class ControlAlgorithm:
     def calculate_steering_signal(self, angle):
         return angle * (400 / math.pi)
 
+    '''
+    Inputs:
+        circle_obstacles : List of CircleObstacle msgs
+        car_state : {x, y, yaw} dictionary.  
+    '''
+    def transform_obstacles_frame(self, circle_obstacles, car_state):
+
+        circle_obstacles_global = []
+        for obstacle in circle_obstacles:
+            x_obstacle = obstacle.center.x
+            y_obstacle = obstacle.center.y
+            alpha = math.atan2(y_obstacle, x_obstacle)
+            theta = math.pi + car_state['yaw']
+            rho = math.sqrt(x_obstacle ** 2 + y_obstacle ** 2)
+            x_obstacle_global = car_state['x'] + rho * math.cos(alpha + theta)
+            y_obstacle_global = car_state['y'] + rho * math.sin(alpha + theta)
+            circle_obstacles_global.append((x_obstacle_global, y_obstacle_global, obstacle.true_radius))
+
+        return circle_obstacles_global
