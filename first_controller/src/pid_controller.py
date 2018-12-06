@@ -38,7 +38,7 @@ class pid_controller(controller):
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.waypoint_top = rospy.get_param(rospy.get_name() + "/waypoint_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
 		self.command_controller_follow_top = rospy.get_param(rospy.get_name() + "/command_controller_follow_topic")
 
 		# Publishers/Subscriber
@@ -124,8 +124,8 @@ class pid_controller(controller):
 		error_D_yaw = (self.error_yaw - self.old_error_yaw)/self.Ts
 		return error_D_yaw, error_D_dis
 
-	def compute_velocity_angular(self):
-		d = math.sqrt((self.x-self.x_w)**2 + (self.y-self.y_w)**2)
+	def compute_velocity_angular(self, x_w, y_w):
+		d = math.sqrt((self.x-x_w)**2 + (self.y-y_w)**2)
 		self.old_error_dis = self.error_dis
 		self.error_dis = d - self.d_des
                
@@ -134,7 +134,7 @@ class pid_controller(controller):
 			self.error_dis = 0.0
 			self.error_I_dis = 0.0
 
-		yaw_des = math.atan2(self.y_w-self.y, self.x_w-self.x)
+		yaw_des = math.atan2(y_w-self.y, x_w-self.x)
 		self.old_error_yaw = self.error_yaw
 		self.error_yaw = yaw_des - self.yaw
 		#rospy.logerr("e_yaw+ = %s ,  e_yaw- = %s", self.error_yaw, self.error_yaw-math.pi*2)
@@ -177,10 +177,10 @@ class pid_controller(controller):
 				delta = -math.pi/4
 		return delta, v
 
-	def compute_delta(self):
+	def compute_delta(self, x_w, y_w):
 
 	
-	    alpha = math.atan2(self.y_w - self.y, self.x_w - self.x) - self.yaw
+	    alpha = math.atan2(y_w - self.y, x_w - self.x) - self.yaw
 
 	    #Lf = self.k * self.v + self.lf
 	    Lf = self.error_dis + self.d_des
@@ -199,16 +199,23 @@ if __name__ == "__main__":
 	rospy.init_node('pid_controller')
 	my_controller = pid_controller(K_yaw_P = 1.2, K_yaw_D = 0.2, K_yaw_I = 0.01, K_dis_P = 15, K_dis_I = 1, K_dis_D = 2, d_des = 0.5)
 	rate = rospy.Rate(80)
+	ind = 0
 	#rospy.logerr("%s MAIN STARTED")
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:
 	  		my_controller.parse_path(my_controller.path)
 	    		my_controller.parse_state(my_controller.state)
-			if my_controller.TRACKING:
-				delta, v = my_controller.compute_velocity_angular()
-				delta_pp = my_controller.compute_delta()		
-				#rospy.logerr(" speed = %s, error_dis = %s", v, my_controller.error_dis)		
+			if True or my_controller.TRACKING:
+				x = my_controller.x_path[ind]
+				y = my_controller.y_path[ind]
+				delta, v = my_controller.compute_velocity_angular(x,y)
+				delta_pp = my_controller.compute_delta(x,y)		
+				rospy.logerr(" x = %s, y = %s, ind= %s", x, y, ind)
+				if my_controller.error_dis < 0.1:
+					ind = ind + 1
 				my_controller.publish_control(delta_pp, v)
+				if ind == len(my_controller.x_path):
+					ind = 0
 			else:
 				my_controller.publish_control(delta_pp, 0)
 			rate.sleep()

@@ -4,6 +4,7 @@
 	<param name="steer_control_topic"                  value="/lli/ctrl_request"/>
 	<param name="car_pose_topic"                       value="/SVEA2/pose"/>
 	<param name="replanner_path_topic"                 value="/replanner_path"/>
+	<param name="new_replanner_path_topic"             value="/sample_path"/>
 	<param name="path_topic"                           value="/SVEA2/path"/>
 	<param name="leader_path_topic"                    value="/leader_path"/>
 	<param name="waypoint_topic"                       value="/leader/pose"/> 

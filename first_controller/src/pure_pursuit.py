@@ -43,7 +43,7 @@ class pure_pursuit(controller):
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.replanner_path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
 		#self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/new_replanner_path_topic")
 		self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 		
 		# Publishers/Subscriber
@@ -78,6 +78,7 @@ class pure_pursuit(controller):
 		self.state_available = True
         
 	def save_path(self, path_msg):
+		rospy.logerr("Path received")
 		self.path = path_msg
 		self.path_available = True
 
@@ -138,7 +139,7 @@ class pure_pursuit(controller):
 	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
 
 		
-
+		"""
 		if self.counter < 5:
 			new_ind = d.index(min(d))
 			self.counter += 1
@@ -153,7 +154,7 @@ class pure_pursuit(controller):
 				self.last_nearest_index = len(extra)-1
 			else:
 				self.last_nearest_index = new_ind
-
+		"""
 	    	ind = d.index(min(d))
 		
 		#ind = new_ind
@@ -206,14 +207,14 @@ class pure_pursuit(controller):
 if __name__ == "__main__":
 	rospy.init_node('pure_pursuit')
 	rate = rospy.Rate(20)
-	my_controller = pure_pursuit(l=0.23, lf = 0.3, v=20)
+	my_controller = pure_pursuit(l=0.23, lf = 0.1, v=20)
 	print('MAIN STARTED')
 	while not rospy.is_shutdown():
 		if my_controller.state_available and my_controller.path_available:   
 	  		my_controller.parse_path(my_controller.path)
 	    		my_controller.parse_state(my_controller.odom)
-			if my_controller.TRACKING:
-#				rospy.loginfo(str(v))
+			if True or my_controller.TRACKING:
+
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
 				#v = my_controller.compute_velocity(delta, ind)
