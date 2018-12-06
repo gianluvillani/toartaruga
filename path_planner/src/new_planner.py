@@ -27,7 +27,7 @@ import timeit
 import path_utils
 #import plot_utils
 from spline_interpolation import Spline2D
-DEBUG = True
+DEBUG = False
 
 
 def log(s):
@@ -47,12 +47,12 @@ class DynamicPlanner:
     def __init__(self, safety_distance=0.1):
         self.state_car = PoseStamped()
         self.obstacle_msg = Obstacles()
-	self.obstacle_handler = path_utils.ObstacleHandler()
+
         self.x_car = 0
         self.y_car = 0
         self.yaw_car = 0
         self.car_index = 0
-        self. min_dist_back_on_path = 0.1
+        self. min_dist_back_on_path = 9.5
 	self.reference_msg = nav_msgs.msg.Path()
         self.safety_distance = safety_distance
         self.circle_obstacles = []
@@ -82,6 +82,7 @@ class DynamicPlanner:
         self.pub_path = rospy.Publisher('/sample_path', nav_msgs.msg.Path)
 	topic = 'visualization_marker_array'
 	self.pub_obstacle = rospy.Publisher(topic, MarkerArray)
+	self.pub_obstacle1 = rospy.Publisher("obstacles_on_path", MarkerArray)
 
         #self.pub_marker = rospy.Publisher('/marker', PoseStamped)
 
@@ -152,46 +153,83 @@ class DynamicPlanner:
 	marker.pose.position.z = 0 
 	return marker
 
+    def make_marker1(self, obstacle):
+	marker = Marker()
+   	marker.header.frame_id = "qualisys"
+   	marker.type = marker.SPHERE
+   	marker.action = marker.ADD
+   	marker.scale.x = 0.1
+   	marker.scale.y = 0.1
+   	marker.scale.z = 0.1
+   	marker.color.a = 1.0
+   	marker.color.r = 1.0
+   	marker.color.g = 0.0
+	marker.color.b = 0.0
+	marker.pose.orientation.w = 1.0
+	marker.pose.position.x = obstacle.x
+	marker.pose.position.y = obstacle.y 
+	marker.pose.position.z = 0 
+	return marker
+
     def parse_obstacles(self):
 	markerArray = MarkerArray()
+	markerArray1 = MarkerArray()
 	obstacle_msg = self.obstacle_msg
+        if self.reset_obstacles:
+            self.circle_obstacles = []
+	print(type(self.reference_path))
         car_index = self.reference_path.get_closest_index_on_path(self.x_car, self.y_car)
+
         self.car_index = car_index
 	print('Received '+ str(len(obstacle_msg.circles)) + ' obstacles')
-	obstacles_on_path = []
+
+	
         for circle in obstacle_msg.circles:
             x_obstacle_global, y_obstacle_global = self.transform2global(circle.center.x, circle.center.y)
             obstacle = path_utils.Obstacle(x_obstacle_global, y_obstacle_global, circle.radius)
-            index_on_path = self.reference_path.get_closest_index_on_path(obstacle.x, obstacle.y)
-	    if math.hypot(x_obstacle_global-self.reference_path.cx[index_on_path], y_obstacle_global-self.reference_path.cy[index_on_path]) < 1:
-	        obstacles_on_path.append(obstacle)
-	
-	self.obstacle_handler.check_new_obstacles(obstacles_on_path)
-	sorted_obstacles = []
-	for obstacle in self.obstacle_handler.obstacle_list:
-            index_on_path = self.reference_path.get_closest_index_on_path(obstacle.x, obstacle.y)
-	    gradient_on_path = self.reference_path.compute_direction(index_on_path)
-	    obstacle.compute_wp(gradient_on_path, self.safety_distance)
-	    obstacle.index_on_path = (index_on_path - car_index) % self.reference_path.get_length()
-	    if len(sorted_obstacles) == 0:
-	        sorted_obstacles.append(obstacle)
-	    else:
-	        for index, sorted_obstacle in enumerate(sorted_obstacles):
-	            if (obstacle.index_on_path  - car_index) % self.reference_path.get_length() <= (sorted_obstacle.index_on_path - car_index) % self.reference_path.get_length() :
-	                sorted_obstacles.insert(index, obstacle)
-	                break
-	        if obstacle.index_on_path > sorted_obstacles[-1].index_on_path:
-	            sorted_obstacles.append(obstacle)
-                    marker = self.make_marker(obstacle)
-                    markerArray.markers.append(marker)
 
-	self.obstacle_handler.obstacle_list = sorted_obstacles
+            index_on_path = self.reference_path.get_closest_index_on_path(obstacle.x, obstacle.y)
+	    if math.hypot(x_obstacle_global-self.reference_path.cx[index_on_path], y_obstacle_global-self.reference_path.cy[index_on_path]) < 0.5:
+		    gradient_on_path = self.reference_path.compute_direction(index_on_path)
+		    
+		    # Compute n waypoints on the circle
+		    obstacle.compute_wp(gradient_on_path, self.safety_distance)
+		    obstacle.index_on_path = (index_on_path - car_index) % self.reference_path.get_length()
+		    if len(self.circle_obstacles) == 0:
+		        self.circle_obstacles.append(obstacle)
+		    else:
+		        for index, sorted_obstacle in enumerate(self.circle_obstacles):
+		            if obstacle.index_on_path <= sorted_obstacle.index_on_path:
+		                self.circle_obstacles.insert(index, obstacle)
+		                break
+		        if obstacle.index_on_path > self.circle_obstacles[-1].index_on_path:
+		            self.circle_obstacles.append(obstacle)
+		    marker1 = self.make_marker1(obstacle)
+		    markerArray1.markers.append(marker1)
+	    marker = self.make_marker(obstacle)
+	    markerArray.markers.append(marker)
+	'''	
+        fake_first_obstacle = path_utils.Obstacle(x=self.x_car,
+                                          	  y=self.y_car,
+                                                  r=0)
+        fake_first_obstacle.index_on_path = 0
+        fake_first_obstacle.waypoints = [path_utils.WayPoint(self.x_car,
+                                                             self.y_car,
+                                                             None)]
+
+	#self.circle_obstacles.insert(0, fake_first_obstacle)
+	'''
 	id = 0
   	for m in markerArray.markers:
        		m.id = id
         	id += 1	
 		print(id)
 	self.pub_obstacle.publish(markerArray)
+	id = 0
+	for m in markerArray1.markers:
+       		m.id = id
+        	id += 1
+	self.pub_obstacle1.publish(markerArray1)
 	print('Saved '+ str(len(self.circle_obstacles)) + ' obstacles')
 
     def crossing(self, wp1, wp2):
@@ -230,30 +268,32 @@ class DynamicPlanner:
         fake_first_obstacle.waypoints = [path_utils.WayPoint(self.x_car,
                                                              self.y_car,
                                                              None)]
-	self.obstacle_handler.obstacle_list.append(fake_first_obstacle)	
-	obstacles = self.obstacle_handler.obstacle_list
-        for wp in obstacles[-1].waypoints:
+
+
+        self.circle_obstacles.append(fake_first_obstacle)
+        for wp in self.circle_obstacles[-1].waypoints:
             wp.end = True
             wp.feasible = True
             wp.set_cost_to_go(0)
 
-        for i in range(len(obstacles)-2, -1, -1):
-            current_obs = obstacles[i]
-            next_obs = obstacles[i+1]
+        for i in range(len(self.circle_obstacles)-2, -1, -1):
+            current_obs = self.circle_obstacles[i]
+            next_obs = self.circle_obstacles[i+1]
             next_wps = next_obs.waypoints
+	    discretization_step = self.previous_path.ds * 0.5*4
             log('CURRENT OBSTACLE: ' + str(current_obs.x) + ", " + str(current_obs.y))
-            # TODO: If clear distance is enough: indexes on path / ds
+            # TODO: If clear distance is enough: indexes on path /
             distance_on_path = ((next_obs.index_on_path - current_obs.index_on_path) % self.previous_path.get_length()) * self.previous_path.ds
             dist_last = (next_obs.r + next_obs.num_wp * self.safety_distance) / math.cos(self.ang_on_path)
             dist_first = (current_obs.r + current_obs.num_wp * self.safety_distance) / math.cos(self.ang_on_path)
             clean_distance = distance_on_path - (dist_last + dist_first)
-            if clean_distance > self.min_dist_back_on_path:
-                next_wps = []
-                additional_wp = int(clean_distance / (self.previous_path.ds * 2))
-                shift_index = int((clean_distance/additional_wp / self.previous_path.ds))
-                bias_index = int(dist_last/self.previous_path.ds)
+            additional_wp = int(clean_distance / discretization_step)
+            if clean_distance > self.min_dist_back_on_path and additional_wp != 0:
+                shift_index = int((clean_distance/additional_wp / discretization_step))
+                bias_index = int(dist_last/discretization_step)
                 old_wp_list = next_obs.waypoints
                 for i in range(additional_wp):
+		    next_wps = []
                     current_wp_index = (next_obs.index_on_path - (shift_index * (i+1) + bias_index) + self.car_index) % self.previous_path.get_length()
                     new_wp = path_utils.WayPoint(self.previous_path.cx[current_wp_index], self.previous_path.cy[current_wp_index], None)
                     new_wp.feasible = True
@@ -276,7 +316,6 @@ class DynamicPlanner:
                 else:
                     wp0.feasible = True
                     self.find_optimal_next(current_wp=wp0, next_feasible_wps=feasible_waypoints)
-	print('BACKWARD RECURSION ENDED')
 
     def find_optimal_next(self, current_wp, next_feasible_wps):
         index_on_path = self.previous_path.get_closest_index_on_path(current_wp.x, current_wp.y)
@@ -323,25 +362,23 @@ def coordinates_to_msg(sx, sy, sk):
 
 if __name__ == "__main__":
     rospy.init_node('path_publisher', anonymous=True)
-    planner = DynamicPlanner(safety_distance=0.3)
-    planner.x_car = 1
-    planner.y_car = 0
-    planner.yaw_car = math.pi/2
-    rate = rospy.Rate(4)
+    planner = DynamicPlanner(safety_distance=0.1)
+    #planner.x_car = 1
+    #planner.y_car = 0
+    #planner.yaw_car = math.pi/2
+    rate = rospy.Rate(0.4)
     while not rospy.is_shutdown():
 	#try:
 	#print('Try')
  
 	planner.parse_obstacles()
-	print(planner.obstacle_handler.new_obstacles)
-	print(len(planner.obstacle_handler.obstacle_list))
-	if planner.obstacle_handler.new_obstacles and len(planner.obstacle_handler.obstacle_list)>1: 	
+	if len(planner.circle_obstacles)>1: 	
 		planner.parse_state()
 		planner.parse_path()  
 		planner.backward_recursion()
 	    	min_cost = 200
-	    	start_wp = planner.obstacle_handler.obstacle_list[0].waypoints[0]
-	    	for wp in planner.obstacle_handler.obstacle_list[0].waypoints:
+	    	start_wp = planner.circle_obstacles[1].waypoints[0]
+	    	for wp in planner.circle_obstacles[0].waypoints:
 			tx = wp.x
 	    		ty = wp.y
 			alpha = math.atan2(ty - planner.y_car, tx - planner.x_car) - planner.yaw_car
@@ -352,20 +389,21 @@ if __name__ == "__main__":
 				start_wp = wp
 
 	    	next_wp = start_wp
-	    	to_be_splined_x = [start_wp.x]
-	    	to_be_splined_y = [start_wp.y]
+	    	to_be_splined_x = [planner.x_car]
+	    	to_be_splined_y = [planner.y_car]
 	    	end = False
 	    	while not end:
-			to_be_splined_x.append(next_wp.x)
-			to_be_splined_y.append(next_wp.y)
+			if next_wp.x != 0:
+				to_be_splined_x.append(next_wp.x)
+				to_be_splined_y.append(next_wp.y)
 			end = next_wp.end
 			if not next_wp.end:
-	    			next_wp = next_wp.next_wp
-
+		    		next_wp = next_wp.next_wp
 		print('Splinin ' + str(len(to_be_splined_x)))
-		print(to_be_splined_x[1:-1])
-		print(to_be_splined_y[1:-1])
-	    	spl = Spline2D(to_be_splined_x[2:-1], to_be_splined_y[2:-1])
+		print(to_be_splined_x)
+	        print(to_be_splined_y)
+		
+	    	spl = Spline2D(to_be_splined_x, to_be_splined_y)
 	    	s = np.arange(0, spl.s[-1], 0.1)
 	    	sx = []
 	    	sy = []

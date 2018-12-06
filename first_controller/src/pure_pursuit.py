@@ -218,7 +218,7 @@ if __name__ == "__main__":
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
 				#v = my_controller.compute_velocity(delta, ind)
-				my_controller.publish_control(delta, ind, 20)
+				my_controller.publish_control(0, ind, 0)
 			else:
 				ind = my_controller.calc_target_index()
                                 delta = my_controller.compute_delta(ind)

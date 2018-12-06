@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from spline_interpolation import Spline2D
-import copy
+
 
 class WayPoint:
     def __init__(self, x, y, obstacle):
@@ -64,6 +64,7 @@ class Obstacle:
 class Path:
     def __init__(self, cx, cy, ds=0.05):
         # spline and save.
+	#print("BEFORE SPLINE 2D cx and cy", cx,cy)
         spl = Spline2D(cx, cy)
         s = np.arange(0, spl.s[-1], ds)
         sx = []
@@ -109,29 +110,12 @@ class Path:
         pass
 
 
-class ObstacleHandler:
-    def __init__(self):
-        self.obstacle_list = None
-        self.counter = 0
-        self.num_update = 5
-        self.threshold_dist = 0.15
-        self.initialized = False
-        self.new_obstacles = True
 
-    def check_new_obstacles(self, new_obstacles):
-        if not self.initialized:
-            self.obstacle_list = copy.deepcopy(new_obstacles)
-            return
-        for new in new_obstacles:
-            for old in self.obstacle_list:
-                if math.hypot(old.x - new.x, old.y - new.y) > self.threshold_dist:
-                    self.obstacle_list = copy.deepcopy(new_obstacles)
-                    self.new_obstacles = True
-                    return
-                else:
-                    old.x = (old.x + new.x)/2
-                    old.y = (old.y + new.y)/2
-                    self.new_obstacles = False
 
-    def check_init(self):
-        return self.initialized
+
+
+
+
+
+
+
