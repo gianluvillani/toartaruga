@@ -52,6 +52,8 @@ class ControlAlgorithm:
     '''
 
     def pose_to_xy_yaw(self, state):
+	if state == None:
+		return None
         x = state.pose.position.x
         y = state.pose.position.y
         orientation_q = state.pose.orientation

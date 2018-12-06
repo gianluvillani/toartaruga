@@ -6,6 +6,7 @@
 	<param name="danger_topic"                         value="/danger"/>
 	<param name="/command_controller_follow_topic"     value="/start_stop_follow"/>
 	<param name="selected_controller"				   value="arc_avoidance"/>
+	<param name="obstacles_topic"			   value="/obstacles"/>
 	</node>
 </launch>
 

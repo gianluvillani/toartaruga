@@ -27,6 +27,11 @@ class CircularAvoidance(ControlAlgorithm):
 		lli_ctrl_request - the desired control signal
 	'''
 	def get_control(self, car_state, target, parameters={'circle_obstacles':[], 'line_obstacles':[], 'turning_radius':0.4, 'radius_padding':0.2}):
+		if car_state == None or target == None:
+			msg = lli_ctrl_request()
+			msg.steering = 0
+			msg.velocity = 0
+			return msg
 		self.parameters = parameters
 		self.target = target
 		self.car_state = self.pose_to_xy_yaw(car_state)
@@ -91,7 +96,7 @@ class CircularAvoidance(ControlAlgorithm):
 			center = c.center #Point
 			radius = c.true_radius + self.parameters['radius_padding']
 
-			for point in path:
+			for point in path.poses:
 				if self.point_msg_distance(point, center) < radius & local.center.x > 0:
 					circles_on_path.append(local)
 		min_distance = 1000
