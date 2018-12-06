@@ -81,7 +81,7 @@ class ControlAlgorithm:
             x_obstacle = obstacle.center.x
             y_obstacle = obstacle.center.y
             alpha = math.atan2(y_obstacle, x_obstacle)
-            theta = math.pi + car_state['yaw']
+            theta = math.pi + car_state['yaw'][0]
             rho = math.sqrt(x_obstacle ** 2 + y_obstacle ** 2)
             x_obstacle_global = car_state['x'] + rho * math.cos(alpha + theta)
             y_obstacle_global = car_state['y'] + rho * math.sin(alpha + theta)
