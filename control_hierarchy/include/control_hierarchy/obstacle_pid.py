@@ -7,7 +7,8 @@ from control_algorithm import ControlAlgorithm
 from pure_pursuit import PurePursuit
 from spline_interpolation import Spline2D
 from low_level_interface.msg import lli_ctrl_request
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, PoseStamped
+
 
 class CircularAvoidance(ControlAlgorithm):
 
@@ -85,7 +86,9 @@ class CircularAvoidance(ControlAlgorithm):
 			point = point_a
 			point.y += math.sin(i*d_angle)*(point_a.x - center.x)
 			point.x += math.cos(i*d_angle)*(point_a.x - center.x)
-			path.append(point)
+			pose = PoseStamped()
+			pose.pose.position = point
+			path.append(pose)
 		return path
 
 

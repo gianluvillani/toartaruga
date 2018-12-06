@@ -43,6 +43,12 @@ class Dispatcher:
 
 
 	def publish_control(self):
+		if self.car_state == None or self.control_target == None:
+			control_signal = lli_ctrl_request()
+			control_signal.steering = 0
+			control_signal.velocity = 0
+			self.pub_control_signal.publish(control_signal)
+			return
 		control_signal = self.algorithm.get_control(car_state=self.car_state, target=self.control_target, parameters=self.parameters)
 		# Pure pursuit parameters
 		self.parameters['v'] = control_signal.velocity
