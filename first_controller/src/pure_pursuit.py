@@ -43,7 +43,8 @@ class pure_pursuit(controller):
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.replanner_path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
 		#self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/new_replanner_path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
+		#self.path_top = "/sample_path"
 		self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 		
 		# Publishers/Subscriber
@@ -218,7 +219,7 @@ if __name__ == "__main__":
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
 				#v = my_controller.compute_velocity(delta, ind)
-				my_controller.publish_control(0, ind, 0)
+				my_controller.publish_control(delta, ind, 20)
 			else:
 				ind = my_controller.calc_target_index()
                                 delta = my_controller.compute_delta(ind)

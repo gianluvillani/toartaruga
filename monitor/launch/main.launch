@@ -13,9 +13,9 @@
 	</include>
 
 	<include file="$(find qualisys)/launch/qualisys_odom.launch">
-		<arg name="model" value="leader" />
+		<arg name="model" value="SVEA1" />
 	</include> 
-<!--	<include file="$(find path_memory)/launch/path_memory.launch" />-->
+	<include file="$(find path_memory)/launch/path_memory.launch" />
 	<include file="$(find first_controller)/launch/controller.launch" />
 <!--	<include file="$(find path_planner)/launch/path_planner.launch" />-->
 <!--	<include file="$(find supervisor)/launch/supervisor.launch" />-->

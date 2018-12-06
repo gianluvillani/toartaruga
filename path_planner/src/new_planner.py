@@ -52,7 +52,7 @@ class DynamicPlanner:
         self.y_car = 0
         self.yaw_car = 0
         self.car_index = 0
-        self. min_dist_back_on_path = 9.5
+        self. min_dist_back_on_path = 0.4
 	self.reference_msg = nav_msgs.msg.Path()
         self.safety_distance = safety_distance
         self.circle_obstacles = []
@@ -178,7 +178,7 @@ class DynamicPlanner:
         if self.reset_obstacles:
             self.circle_obstacles = []
 	print(type(self.reference_path))
-        car_index = self.reference_path.get_closest_index_on_path(self.x_car, self.y_car)
+        car_index = self.previous_path.get_closest_index_on_path(self.x_car, self.y_car)
 
         self.car_index = car_index
 	print('Received '+ str(len(obstacle_msg.circles)) + ' obstacles')
@@ -260,27 +260,45 @@ class DynamicPlanner:
             return True
 
     def backward_recursion(self):
-        fake_first_obstacle = path_utils.Obstacle(x=self.x_car,
-                                                  y=self.y_car,
+	"""	
+	last_index_on_path = self.closest_index_on_path(self.circle_obstacles[0].x,self.circle_obstacles[0].y)	
+	first_index_on_path = self.closest_index_on_path(self.circle_obstacles[-1].x,self.circle_obstacles[-1].y)	
+	
+	dist_last =  0
+	discretization_step = self.previous_path.ds * 0.5*4
+        dist_first = (self.circle_obstacles[-1] + self.circle_obstacles[-1].num_wp * self.safety_distance) / math.cos(self.ang_on_path)
+        clean_distance = distance_on_path - (dist_last + dist_first)
+        additional_wp = int(clean_distance / discretization_step)
+	if clean_distance > self.min_dist_back_on_path and additional_wp != 0:
+		shift_index = int((clean_distance/additional_wp /  self.previous_path.ds))
+                bias_index = int(dist_last / self.previous_path.ds)
+                for i in range(additional_wp):
+		    next_wps = []
+		for wp in self.circle_obstacles[-1].waypoints:
+		    wp.next = lol
+		    wp.feasible = True
+		    wp.set_cost_to_go(0)
+	"""	
+	fake_first_obstacle = path_utils.Obstacle(x=self.circle_obstacles[0].x,
+                                          	  y=self.circle_obstacles[0].y,
                                                   r=0)
-        index_on_path = self.previous_path.get_closest_index_on_path(fake_first_obstacle.x, fake_first_obstacle.y)
-        fake_first_obstacle.index_on_path = (index_on_path - self.car_index) % self.previous_path.get_length()
-        fake_first_obstacle.waypoints = [path_utils.WayPoint(self.x_car,
-                                                             self.y_car,
+        
+	idx0 = self.previous_path.get_closest_index_on_path(x=self.circle_obstacles[0].x, y=self.circle_obstacles[0].y,)
+        fake_first_obstacle.waypoints = [path_utils.WayPoint(self.previous_path.cx[idx0],
+                                                             self.previous_path.cy[idx0],
                                                              None)]
-
-
-        self.circle_obstacles.append(fake_first_obstacle)
-        for wp in self.circle_obstacles[-1].waypoints:
-            wp.end = True
-            wp.feasible = True
-            wp.set_cost_to_go(0)
+	
+	self.circle_obstacles.append(fake_first_obstacle)
+	for wp in self.circle_obstacles[-1].waypoints:
+		wp.end = True
+		wp.feasible = True
+		wp.set_cost_to_go(0)
 
         for i in range(len(self.circle_obstacles)-2, -1, -1):
             current_obs = self.circle_obstacles[i]
             next_obs = self.circle_obstacles[i+1]
             next_wps = next_obs.waypoints
-	    discretization_step = self.previous_path.ds * 0.5*4
+	    discretization_step = self.previous_path.ds
             log('CURRENT OBSTACLE: ' + str(current_obs.x) + ", " + str(current_obs.y))
             # TODO: If clear distance is enough: indexes on path /
             distance_on_path = ((next_obs.index_on_path - current_obs.index_on_path) % self.previous_path.get_length()) * self.previous_path.ds
@@ -289,8 +307,8 @@ class DynamicPlanner:
             clean_distance = distance_on_path - (dist_last + dist_first)
             additional_wp = int(clean_distance / discretization_step)
             if clean_distance > self.min_dist_back_on_path and additional_wp != 0:
-                shift_index = int((clean_distance/additional_wp / discretization_step))
-                bias_index = int(dist_last/discretization_step)
+                shift_index = int((clean_distance/additional_wp / self.previous_path.ds))
+                bias_index = int(dist_last / self.previous_path.ds)
                 old_wp_list = next_obs.waypoints
                 for i in range(additional_wp):
 		    next_wps = []
@@ -366,7 +384,7 @@ if __name__ == "__main__":
     #planner.x_car = 1
     #planner.y_car = 0
     #planner.yaw_car = math.pi/2
-    rate = rospy.Rate(0.4)
+    rate = rospy.Rate(10)
     while not rospy.is_shutdown():
 	#try:
 	#print('Try')
