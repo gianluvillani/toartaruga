@@ -56,9 +56,10 @@ if __name__ == "__main__":
 	my_path = path_memorization()
 	while not rospy.is_shutdown():
 		rospy.logerr ('check if none= %s', my_path.check_if_none())
-		if my_path.check_if_none() and start_publish>0 :
+		if my_path.check_if_none() and my_path.start_publish>0 :
 			rospy.logerr ('you are in the if and check if none is= %s', my_path.check_if_none())
 			my_path.publish_leader_path()
+			my_path.start_publish=0
 		rate.sleep()
 
 
