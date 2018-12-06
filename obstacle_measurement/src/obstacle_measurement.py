@@ -32,11 +32,11 @@ class obstacle_measurement:
 		self.obstacles_top = rospy.get_param(rospy.get_name() + '/obstacles_topic')
 		self.danger_top = rospy.get_param(rospy.get_name() + '/danger_topic')
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
-		self.important_obstacles_topic = rospy.get_param(rospy.get_name() + '/important_obstacles_topic')
+		#self.important_obstacles_topic = rospy.get_param(rospy.get_name() + '/important_obstacles_topic')
 
 		# Publishers
 		self.pub_danger = rospy.Publisher(self.danger_top, Float32)
-		self.pub_intersecting_obstacles = rospy.Publisher(self.important_obstacles_topic, CircleObstacle)
+#		self.pub_intersecting_obstacles = rospy.Publisher(self.important_obstacles_topic, CircleObstacle)
 
 		# Subscribers
 		self.sub_obstacles = rospy.Subscriber(self.obstacles_top, Obstacles, self.save_obstacles)
