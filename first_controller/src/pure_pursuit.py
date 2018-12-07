@@ -33,6 +33,7 @@ class pure_pursuit(controller):
 		self.path_available = False
 		self.cx = []
 		self.cy = []
+		self.ck = []
 		self.starting_time=rospy.get_time()
 		self.TRACKING = True
 		self.last_nearest_index = 0
@@ -41,40 +42,34 @@ class pure_pursuit(controller):
 		# Access rosparams
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
+		self.replanner_path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
 		self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 		
 		# Publishers/Subscriber
 		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
-		self.pub_steer_debug = rospy.Publisher('/steering_input', Float32)
-		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
+		#self.pub_steer_debug = rospy.Publisher('/steering_input', Float32)
 		self.sub_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
 		self.sub_start_stop_controller = rospy.Subscriber(self.command_controller_top, Bool, self.start_stop)
+		self.pub_marker = rospy.Publisher('/lookahead', PoseStamped)
+		self.pub_path_spline = rospy.Publisher('/splined_path', Path)
+	
 		
 	def start_stop(self, start_stop_msg):
 		self.TRACKING = start_stop_msg.data
-	
-	def update_danger(self, danger_msg):
-		if danger_msg.data > 0.5:
-			self.TRACKING = False
-		else:
-			self.TRACKING = True
+
 		
-	def parse_state(self, odom_msg):
-		#print "STATE RECEIVED!"
-                #self.x = odom_msg.pose.pose.position.x
-                #self.y = odom_msg.pose.pose.position.y
-		self.x = odom_msg.pose.position.x
-                self.y = odom_msg.pose.position.y
-                #orientation_q = odom_msg.pose.pose.orientation
-		orientation_q = odom_msg.pose.orientation
+	def parse_state(self, state_msg):
+		self.x = state_msg.pose.position.x
+                self.y = state_msg.pose.position.y
+		orientation_q = state_msg.pose.orientation
                 orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
                 self.yaw = euler_from_quaternion(orientation_list)[2]
                 self.state_available = True
         
-	def save_state(self, odom_msg):
-		self.odom = odom_msg
+	def save_state(self, state_msg):
+		self.state = state_msg
 		self.state_available = True
         
 	def save_path(self, path_msg):
@@ -83,7 +78,6 @@ class pure_pursuit(controller):
 
 	def parse_path(self, path_msg):
 		# TODO: This fix is just to debug pure_pursuit, find a solution
-		#print "PATH PUBLISHED"				
 		cx = []
 		cy = []
 		ck = []
@@ -102,7 +96,20 @@ class pure_pursuit(controller):
 		self.cx = cx
 		self.cy = cy
 		self.ck = ck
+		rospy.logerr("length of self.cx --------------------------------: %s",len(self.cx))
+	        path_msg = Path()
+	    	z_init = 0
+	        for x, y, k in zip(self.cx, self.cy, self.ck):
+			pose = PoseStamped()
+			pose.header.frame_id = 'qualisys'
+			pose.pose.position.x = x
+			pose.pose.position.y = y
+			pose.pose.position.z = 0
+			path_msg.poses.append(pose)
+	        path_msg.header.frame_id = 'qualisys'
+		self.pub_path_spline.publish(path_msg)
 		
+	
 	def publish_control(self, steering_degree, target_ind, velocity):
 		linear_control = velocity	#check the map to vel
 		angular_control = steering_degree*(400/math.pi)*0.9+0.1*self.start_steering
@@ -111,9 +118,9 @@ class pure_pursuit(controller):
 		ctrl_request_msg.velocity = int(linear_control)
 		ctrl_request_msg.steering = int(angular_control)
 		self.pub_steer_control.publish(ctrl_request_msg)
-		msg = Float32()
-		msg.data = angular_control
-		self.pub_steer_debug.publish(msg)
+		#msg = Float32()
+		#msg.data = angular_control
+		#self.pub_steer_debug.publish(msg)
 		#self.save_data(target_ind, steering_degree, linear_control)	
 	
 	def save_data(self, index, delta, velocity):
@@ -123,7 +130,7 @@ class pure_pursuit(controller):
 
 	def calc_target_index(self):
 	    
-	    ind = None
+	    ind = 0
 	    # search nearest point index
 	    if len(self.cx)!=0:
 	    	dx = [self.x - icx for icx in self.cx]
@@ -131,12 +138,11 @@ class pure_pursuit(controller):
 	    	d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
 
 		
-
+		"""
 		if self.counter < 5:
 			new_ind = d.index(min(d))
 			self.counter += 1
 			self.last_nearest_index
-			print(self.last_nearest_index)
 		else:
 			new_d = d[self.last_nearest_index:self.last_nearest_index + len(self.cx)//5]
 			
@@ -147,7 +153,7 @@ class pure_pursuit(controller):
 				self.last_nearest_index = len(extra)-1
 			else:
 				self.last_nearest_index = new_ind
-
+		"""
 	    	ind = d.index(min(d))
 		
 		#ind = new_ind
@@ -163,13 +169,17 @@ class pure_pursuit(controller):
 	        	ind +=1	
 			if ind>=len(self.cx)-1:
 				ind = 0
+
 	    return ind
 
 	def compute_delta(self,ind):
-	    if ind ==None:
-		return 0
 	    tx = self.cx[ind]
 	    ty = self.cy[ind]
+	    lookahead = PoseStamped()
+	    lookahead.pose.position.x = tx
+	    lookahead.pose.position.y = ty
+ 	    lookahead.header.frame_id = 'qualisys'
+	    self.pub_marker.publish(lookahead)
 	    alpha = math.atan2(ty - self.y, tx - self.x) - self.yaw
 
 	    if self.v < 0:  # back
@@ -186,31 +196,44 @@ class pure_pursuit(controller):
 
 
 	def compute_velocity(self, delta, ind):
-		# a
 		k = self.ck[ind]
-		k_max = 1/0.2
+		rospy.logerr("k = %s", k)
+		k_max = 10
 		k_min = 0
-		v_max = 50
-		return v_max*(1-k/max(k_max, k))
+		v_max = 10
+		v =  v_max*(1-k/max(k_max, k))
+		gamma = 3
+		if v < 0:
+			v = -(v-18)*(-1+math.exp(gamma*v))
+		if v > 0:
+			v = (v+13)*(1-math.exp(-gamma*v))
+
+		if v > 100:
+			v = 80
+
+		if v < -100:
+			v = -80
+		return v
 
 if __name__ == "__main__":
 	rospy.init_node('pure_pursuit')
-	rate = rospy.Rate(20)
-	my_controller = pure_pursuit(l=0.23, lf = 0.4, v=20)
+	rate = rospy.Rate(80)
+	my_controller = pure_pursuit(l=0.23, lf = 0.3) 
 	print('MAIN STARTED')
 	while not rospy.is_shutdown():
-		if my_controller.state_available and my_controller.path_available:   
+		if my_controller.state_available and my_controller.path_available:
 	  		my_controller.parse_path(my_controller.path)
-	    		my_controller.parse_state(my_controller.odom)
-			if my_controller.TRACKING:
-#				rospy.loginfo(str(v))
+	    		my_controller.parse_state(my_controller.state)
+			if True or my_controller.TRACKING:
 		    		ind = my_controller.calc_target_index()
 				delta = my_controller.compute_delta(ind)
-				v = my_controller.compute_velocity(delta, ind)
-				my_controller.publish_control(delta, ind, v)
-				print('HEEEERRREEEEE')
+				if ind==len(my_controller.cx)-1:
+					my_controller.publish_control(delta, 0, 0)
+				else:
+					v = my_controller.compute_velocity(delta, ind)
+					my_controller.publish_control(delta, ind, v)
+				#rospy.logerr("delta = %s, ind = %s, v = %s", delta, ind, v)
 			else:
-				rospy.loginfo("hej")
 				ind = my_controller.calc_target_index()
                                 delta = my_controller.compute_delta(ind)
 				my_controller.publish_control(delta, 0, 0)

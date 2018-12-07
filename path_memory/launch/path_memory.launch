@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+	<node pkg="path_memory" type="path_memorization.py" name="path_memorization">
+	<param name="leader_path_topic"                    value="/leader_path"/>
+	<param name="waypoint_topic"                       value="/leader/pose"/> 
+	</node>
+</launch>
+
+

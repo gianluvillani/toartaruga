@@ -28,7 +28,6 @@ class StateMachine:
         self.states_tn = states_tn
 	self.path_available = False
 	# Access rosparams
-	""
 	self.command_controller_top = rospy.get_param(rospy.get_name() + "/command_controller_topic")
 	self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
 	self.danger_top = rospy.get_param(rospy.get_name() + "/danger_topic")
