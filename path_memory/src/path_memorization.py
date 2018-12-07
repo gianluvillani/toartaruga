@@ -38,7 +38,7 @@ class path_memorization:
 		#if self.count %5 == 0 :
 		last_waypoint = self.leader_past_path[-1]
 		d = (last_waypoint.poses.position.x - self.new_point.poses.position.x)**2 + (last_waypoint.poses.position.y - self.new_point.poses.position.y)**2
-		if last_waypoint is not None and ((last_waypoint.poses.position.x - last_waypoint.poses.position.x**2)**2 + last_waypoint.poses.position.y**2) < :
+#		if last_waypoint is not None and ((last_waypoint.poses.position.x - last_waypoint.poses.position.x**2)**2 + last_waypoint.poses.position.y**2) < :
 
 		self.leader_past_path.append(waypoint_msg)
 		self.leader_past_path.pop(0)
