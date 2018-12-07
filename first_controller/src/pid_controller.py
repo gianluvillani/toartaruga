@@ -38,12 +38,11 @@ class pid_controller(controller):
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.waypoint_top = rospy.get_param(rospy.get_name() + "/waypoint_topic")
-		self.path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
+		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
 		self.command_controller_follow_top = rospy.get_param(rospy.get_name() + "/command_controller_follow_topic")
 
 		# Publishers/Subscriber
 		self.pub_steer_control = rospy.Publisher(self.steer_control_top, lli_ctrl_request)
-		#self.sub_pose = rospy.Subscriber('/simulator/odom', Odometry, self.save_state)
 		self.sub_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
 		self.sub_waypoint = rospy.Subscriber(self.waypoint_top, PoseStamped, self.save_waypoint)
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
@@ -52,19 +51,9 @@ class pid_controller(controller):
 	def start_stop(self, start_stop_msg):
 		self.TRACKING = start_stop_msg.data
 	
-	#def update_danger(self, danger_msg):
-	#	if danger_msg.data > 0.5:
-	#		self.TRACKING = False
-	#	else:
-	#		self.TRACKING = True
-		
 	def parse_state(self, state_msg):
-		#print "STATE RECEIVED!"
-                #self.x = odom_msg.pose.pose.position.x
-                #self.y = odom_msg.pose.pose.position.y
 		self.x = state_msg.pose.position.x
                 self.y = state_msg.pose.position.y
-                #orientation_q = odom_msg.pose.pose.orientation
 		orientation_q = state_msg.pose.orientation
                 orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
                 self.yaw = euler_from_quaternion(orientation_list)[2]
@@ -96,8 +85,6 @@ class pid_controller(controller):
 		orientation_q = waypoint_msg.pose.orientation
                 orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
                 self.yaw_w = euler_from_quaternion(orientation_list)[2]
-		#self.x_w = 0
-		#self.y_w = 0
 
 	def publish_control(self, steering_degree, velocity):
 		linear_control = velocity	#check the map to vel
@@ -146,10 +133,8 @@ class pid_controller(controller):
 		gamma = 3
 		if v < 0:
 			v = -(v-18)*(-1+math.exp(gamma*v))
-			#v = v - 15
 		if v > 0:
 			v = (v+13)*(1-math.exp(-gamma*v))
-			#v = v + 13
 
 		if v > 100:
 			v = 100
