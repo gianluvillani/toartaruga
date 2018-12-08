@@ -29,11 +29,12 @@ class PurePursuit(ControlAlgorithm):
 	def get_control(self, car_state, target, parameters={'v':50, 'steering':0, 'k_lookahead':1, 'l':2}):
 		self.parameters = parameters
 		self.target = self.path_to_point_list(target)
+
 		point_path = self.path_to_spline_list(self.target)
 		point_car = self.pose_to_xy_yaw(car_state)
-
+#		rospy.loginfo("Path is: %s", point_path)
 		pure_pursuit_target = self.find_target_point(point_car, point_path)
-
+#		rospy.loginfo("Pure pursuit target: %s", pure_pursuit_target)
 		angle = self.calculate_steering_angle(point_car, pure_pursuit_target, False)
 		steering_signal = self.calculate_steering_signal(angle)
 		velocity_signal = self.calculate_velocity_signal(pure_pursuit_target[2])
@@ -116,7 +117,7 @@ class PurePursuit(ControlAlgorithm):
 	'''
 	def calculate_velocity_signal(self, reference_curvature):
 		k_max = 1/0.2
-		v_max = 50
+		v_max = 30
 		return v_max*(1-reference_curvature/max(k_max, reference_curvature))
 
 	'''
@@ -126,17 +127,7 @@ class PurePursuit(ControlAlgorithm):
 	'''
 	def path_to_spline_list(self, path):
 
-		cx = []
-		cy = []
-		for point in path:
-			cx.append(point.x)
-			cy.append(point.y)
-		sp = Spline2D(cx, cy)
-		s = np.arange(0, sp.s[-1], 0.01)
-
 		points = []
-		for i_s in s:
-			ix, iy = sp.calc_position(i_s)
-			points.append((ix, iy, sp.calc_curvature(i_s)))
-
+		for point in path:
+			points.append((point.x, point.y, 0))
 		return points

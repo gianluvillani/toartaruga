@@ -72,7 +72,7 @@ class StateRunning(smach.State):
 		self.mutex = threading.Lock()
 		self.danger = 0.0
 		self.threshold = 0.8
-		self.sleep_time = 0.1
+		self.sleep_time = 0.02
 		self.other_car = False
 
 	def execute(self, ud):
@@ -151,7 +151,7 @@ class StateFollowing(smach.State):
 		self.mutex = threading.Lock()
 		self.danger = 0.0
 		self.threshold = 0.5
-		self.sleep_time = 0.1
+		self.sleep_time = 0.02
 		self.other_car = True
 
 	def execute(self, ud):

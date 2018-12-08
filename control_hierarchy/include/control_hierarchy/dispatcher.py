@@ -23,7 +23,7 @@ class Dispatcher:
 		self.control_target = None
 		self.circle_obstacles = []
 		self.segment_obstacles = []
-		self.parameters = {'v':0, 'steering':0, 'k_lookahead':1, 'l':2, 'circle_obstacles':[], 'line_obstacles':[], 'turning_radius':0.4, 'radius_padding':0.2}
+		self.parameters = {'v':0, 'steering':0, 'k_lookahead':1.2, 'l':2, 'circle_obstacles':[], 'line_obstacles':[], 'turning_radius':0.4, 'radius_padding':0.2}
 
 		self.switch_control(self.current_control_key)
 

@@ -11,7 +11,7 @@ from geometry_msgs.msg import PoseStamped
 
 
 
-def parse_path_file(filepath = '/home/nvidia/catkin_ws/src/vehicle_simulation/src/circle_dense.dat'):
+def parse_path_file(filepath = '/home/nvidia/catkin_ws/src/vehicle_simulation/src/race_track.dat'):
 	print filepath
 	cx = []
 	cy = []
@@ -28,8 +28,8 @@ def coordinates_to_msg(cx, cy):
 	for x, y in zip(cx, cy):
 		pose = PoseStamped()
 		pose.header.frame_id = 'qualisys'
-		pose.pose.position.x = x *1.1+ 1.1
-		pose.pose.position.y = y *1.1
+		pose.pose.position.x = x #*1.1+ 1.1
+		pose.pose.position.y = y #*1.1
 		pose.pose.position.z = z_init
 		z_init+=0.001	
 		path_msg.poses.append(pose)
