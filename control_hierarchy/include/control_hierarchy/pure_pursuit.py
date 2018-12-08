@@ -101,6 +101,7 @@ class PurePursuit(ControlAlgorithm):
 			alpha = math.pi - alpha
 
 		delta = math.atan2(2.0 * self.parameters.get('l') * math.sin(alpha) / lookahead_radius, 1.0)
+		rospy.logdebug("Delta is %s", delta)
 
 		if abs(delta) > 0.95*math.pi / 4:
 			delta = math.copysign(0.95*math.pi / 4, delta)
