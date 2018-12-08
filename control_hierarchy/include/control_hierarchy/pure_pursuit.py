@@ -71,7 +71,7 @@ class PurePursuit(ControlAlgorithm):
 		current_index = best_candidate_index
 
 		while current_distance < lookahead_distance:
-			rospy.logerr("%s , max index is %s", current_index, len(path))
+#			rospy.logerr("%s , max index is %s", current_index, len(path))
 			dL = self.point_distance(path[current_index], path[(current_index+1)% path_length])
 			current_distance += dL
 			current_index += 1
