@@ -34,7 +34,7 @@ class CircularAvoidance(ControlAlgorithm):
 			msg.velocity = 0
 			return msg
 		self.parameters = parameters
-		self.target = target
+		self.target = self.path_to_point_list(target)
 		self.car_state = self.pose_to_xy_yaw(car_state)
 		self.car_point = Point()
 		self.car_point.x = self.car_state['x']
