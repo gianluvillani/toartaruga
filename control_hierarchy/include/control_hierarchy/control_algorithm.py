@@ -102,5 +102,6 @@ class ControlAlgorithm:
         for pose_stamped in path:
             p = Point()
             p.x = pose_stamped.pose.position.x
+            p.y = pose_stamped.pose.position.y
             point_list.append(p)
         return point_list

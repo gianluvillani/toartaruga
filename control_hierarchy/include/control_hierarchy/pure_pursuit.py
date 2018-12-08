@@ -28,8 +28,8 @@ class PurePursuit(ControlAlgorithm):
 	'''
 	def get_control(self, car_state, target, parameters={'v':50, 'steering':0, 'k_lookahead':1, 'l':2}):
 		self.parameters = parameters
-
-		point_path = self.path_to_spline_list(target)
+		self.target = self.path_to_point_list(target)
+		point_path = self.path_to_spline_list(self.target)
 		point_car = self.pose_to_xy_yaw(car_state)
 
 		pure_pursuit_target = self.find_target_point(point_car, point_path)
