@@ -78,7 +78,7 @@ class PurePursuit(ControlAlgorithm):
 			current_index %= path_length
 			if current_index == best_candidate_index:
 				break
-
+		rospy.loginfo("Target point: %s, \n Current point: %s", path[current_index], car_state)
 		return path[current_index]
 
 
@@ -95,13 +95,13 @@ class PurePursuit(ControlAlgorithm):
 
 		alpha =  math.atan2(target_point[1] - car_state.get('y'),
 		                    target_point[0] - car_state.get('x'))\
-		         - car_state.get('yaw')[0]
+		         - car_state.get('yaw')[2]
 
 		if reversing:
 			alpha = math.pi - alpha
 
 		delta = math.atan2(2.0 * self.parameters.get('l') * math.sin(alpha) / lookahead_radius, 1.0)
-		rospy.logdebug("Delta is %s", delta)
+		rospy.loginfo("Delta is %s", delta)
 
 		if abs(delta) > 0.95*math.pi / 4:
 			delta = math.copysign(0.95*math.pi / 4, delta)
