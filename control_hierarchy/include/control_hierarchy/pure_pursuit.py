@@ -128,9 +128,9 @@ class PurePursuit(ControlAlgorithm):
 
 		cx = []
 		cy = []
-		for pose in path.poses:
-			cx.append(pose.pose.position.x)
-			cy.append(pose.pose.position.y)
+		for point in path:
+			cx.append(point.x)
+			cy.append(point.y)
 		sp = Spline2D(cx, cy)
 		s = np.arange(0, sp.s[-1], 0.01)
 
