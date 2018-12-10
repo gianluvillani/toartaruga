@@ -14,7 +14,7 @@ class PidControl(ControlAlgorithm):
 		self.error_yaw = 0
 		self.old_error_yaw = 0
 
-		self.error_I_distance = 0
+		self.error_i_distance = 0
 		self.error_distance = 0
 		self.old_error_distance = 0
 
@@ -32,13 +32,13 @@ class PidControl(ControlAlgorithm):
 	                                                     'd_des':1,
 	                                                     'K_dis_P':1, 'K_dis_D':0, 'K_dis_I':0}):
 		self.parameters = parameters
-		x, y, yaw = self.pose_to_xy_yaw(car_state)
-		target_x, target_y, target_yaw = self.pose_to_xy_yaw(target)
-		delta, v = self.compute_velocity_angular(x, y, yaw, target_x, target_y)
+		x_y_yaw = self.pose_to_xy_yaw(car_state)
+		target_xyyaw = self.pose_to_xy_yaw(target)
+		delta, v = self.compute_velocity_angular(x_y_yaw['x'], x_y_yaw['y'], x_y_yaw['yaw'][2], target_xyyaw['x'], target_xyyaw['y'])
 		ctrl_request = lli_ctrl_request()
 		ctrl_request.steering = self.calculate_steering_signal(delta)
 		ctrl_request.velocity = v
-
+		rospy.loginfo("Target: %s", target)
 		return ctrl_request
 
 	def update_error_i(self):
@@ -46,7 +46,7 @@ class PidControl(ControlAlgorithm):
 		self.error_i_distance += self.error_distance * self.parameters['Ts']
 
 	def derivative(self):
-		error_d_distance = (self.error_distance - self.old_error_distance)/self.Ts
+		error_d_distance = (self.error_distance - self.old_error_distance)/self.parameters['Ts']
 		error_d_yaw = (self.error_yaw - self.old_error_yaw)/self.parameters['Ts']
 		return error_d_yaw, error_d_distance
 
@@ -66,7 +66,7 @@ class PidControl(ControlAlgorithm):
 
 		error_d_yaw, error_d_distance = self.derivative()
 
-		v = self.parameters['K_dis_P'] * self.error_distance + self.parameters['K_dis_D'] * error_d_distance + self.parameters['K_dis_I'] * self.error_I_distance
+		v = self.parameters['K_dis_P'] * self.error_distance + self.parameters['K_dis_D'] * error_d_distance + self.parameters['K_dis_I'] * self.error_i_distance
 
 		delta = self.parameters['K_yaw_P'] * self.error_yaw \
 				+ self.parameters['K_yaw_D'] * error_d_yaw +\
