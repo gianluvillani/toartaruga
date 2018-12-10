@@ -126,7 +126,8 @@ To start following:
 
 To stop following and start memorization:  
 <code>
-    $ rostopic pub /another_car std_msgs/Bool "data: False"  
+    $ rostopic pub /another_car std_msgs/Bool "data: False"
+  
     $ rostopic pub /start_memorizing std_msgs/Bool "data: True"
 </code>
 
