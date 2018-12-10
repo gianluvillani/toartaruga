@@ -119,16 +119,18 @@ Simulator, /simulator/odom can be used as a ghost car to be followed
 IN PROGRESS
 
 ### Full demo command list
-To start following:
+To start following:  
 <code>
     $ rostopic pub /another_car std_msgs/Bool "data: True"
 </code>
-To stop following and start memorization:
+
+To stop following and start memorization:  
 <code>
     $ rostopic pub /another_car std_msgs/Bool "data: False"
     $ rostopic pub /start_memorizing std_msgs/Bool "data: True"
 </code>
-To start following the memorized path: 
+
+To start following the memorized path:   
 <code>
     $ rostopic pub /start_publish_top std_msgs/Float32 "data: 1.0"
 </code>
