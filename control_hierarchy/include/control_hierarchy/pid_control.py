@@ -17,6 +17,7 @@ class PidControl(ControlAlgorithm):
 		self.error_i_distance = 0
 		self.error_distance = 0
 		self.old_error_distance = 0
+		self.name = "PID"
 
 	'''
 	Inputs:
@@ -49,6 +50,23 @@ class PidControl(ControlAlgorithm):
 		error_d_distance = (self.error_distance - self.old_error_distance)/self.parameters['Ts']
 		error_d_yaw = (self.error_yaw - self.old_error_yaw)/self.parameters['Ts']
 		return error_d_yaw, error_d_distance
+	
+	def map_speed_pwm(self, v):
+		gamma = 3
+		if v <= 0:
+			pwm = -(v-18)*(-1+math.exp(gamma*v))
+			#v = v - 15
+		if v > 0:
+			pwm = (v+13)*(1-math.exp(-gamma*v))
+			#v = v + 13
+
+		if pwm > 100:
+			pwm = 100
+
+		if pwm < -100:
+			pwm = -100
+		return pwm
+
 
 	def compute_velocity_angular(self, x_car, y_car, yaw_car, x_waypoint, y_waypoint):
 		d = math.sqrt((x_car - x_waypoint) ** 2 + (y_car - y_waypoint) ** 2)
@@ -67,6 +85,8 @@ class PidControl(ControlAlgorithm):
 		error_d_yaw, error_d_distance = self.derivative()
 
 		v = self.parameters['K_dis_P'] * self.error_distance + self.parameters['K_dis_D'] * error_d_distance + self.parameters['K_dis_I'] * self.error_i_distance
+
+		pwm = self.map_speed_pwm(v)
 
 		delta = self.parameters['K_yaw_P'] * self.error_yaw \
 				+ self.parameters['K_yaw_D'] * error_d_yaw +\
@@ -98,4 +118,21 @@ class PidControl(ControlAlgorithm):
 			if delta < -math.pi / 4:
 				delta = -math.pi / 4
 
-		return delta, v
+		return delta, pwm
+
+	def compute_delta(self):
+
+	
+	    alpha = math.atan2(self.y_w - self.y, self.x_w - self.x) - self.yaw
+
+	    #Lf = self.k * self.v + self.lf
+	    Lf = self.error_dis + self.d_des
+	    l = 0.5
+	    
+	    delta_pp = math.atan2(2.0 * l * math.sin(alpha) / Lf, 1.0)
+	    if delta_pp > math.pi/4:
+		delta_pp = math.pi/4
+	    if delta_pp < -math.pi/4:
+		delta_pp = -math.pi/4
+
+	    return delta_pp

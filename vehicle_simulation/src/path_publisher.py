@@ -18,8 +18,8 @@ def parse_path_file(filepath = '/home/nvidia/catkin_ws/src/vehicle_simulation/sr
 	with open(filepath, 'r') as f:
 		for line in f:
 			parsed_line = line.rstrip('\n').split(',')
-			cx.append(float(parsed_line[0]))
-			cy.append(float(parsed_line[1]))
+			cx.append(float(parsed_line[1]))
+			cy.append(float(parsed_line[0])-0.5)
 	return cx, cy
 	
 def coordinates_to_msg(cx, cy):

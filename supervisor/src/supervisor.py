@@ -13,23 +13,28 @@ class StateIdle(smach.State):
 
 	def __init__(self, dispatcher):
 		smach.State.__init__(self, outcomes=['stop', 'run', 'follow'])
-		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
-		self.sub_path = rospy.Subscriber('/SVEA2/path', Path, self.path_callback)
-		self.sub_follow = rospy.Subscriber('/another_car', Bool, self.other_car_callback)
-
-		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
 		self.mutex = threading.Lock()
-		self.danger = 0.0
-		self.threshold = 0.8
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
+		self.sub_emergency_stop = rospy.Subscriber('/emergency_stop', Float32, self.emergency_stop_callback)
+		self.sub_path = rospy.Subscriber('/leader_path', Path, self.path_callback)
+		self.sub_follow = rospy.Subscriber('/other_car', Bool, self.other_car_callback)
+		self.sub_memorization = rospy.Subscriber('/start_memorization', Bool, self.memorize_path_callback)
+		self.sub_start_publish = rospy.Subscriber('/start_publish_top', Float32, self.start_publish_callback)
+		self.pub_start_stop_controller = rospy.Publisher('/start_stop_controller', Bool)
+		self.emergency_stop = 0.0
+		self.threshold = 0.5
+		self.start_memorization = False
 		self.sleep_time = 0.1
 		self.path = None
-		self.another_car = False
+		self.other_car = False
+		self.start_publish_top = 0.0
 
 	def execute(self, ud):
+		rospy.logerr("IDLE")
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
-			if self.another_car:
-				if self.danger > self.threshold:
+			if self.other_car:
+				if self.emergency_stop > self.threshold:
 					self.mutex.release()
 					return 'stop'
 				else:
@@ -37,7 +42,7 @@ class StateIdle(smach.State):
 					return 'follow'
 
 			if self.path != None:
-				if self.danger > self.threshold:
+				if self.emergency_stop > self.threshold:
 					self.mutex.release()
 					return 'stop'
 				else:
@@ -57,30 +62,53 @@ class StateIdle(smach.State):
 		self.danger = msg.data
 		self.mutex.release()
 
+	def emergency_stop_callback(self, msg):
+		self.mutex.acquire()
+		self.emergency_stop = msg.data
+		self.mutex.release()
+
 	def other_car_callback(self, msg):
 		self.mutex.acquire()
-		self.another_car = msg.data
+		self.other_car = msg.data
+		self.mutex.release()
+
+	def memorize_path_callback(self, msg):
+		self.mutex.acquire()
+		self.start_memorization = msg.data
+		self.mutex.release()
+
+	def start_publish_callback(self, msg):
+		self.mutex.acquire()
+		self.start_publish_top = msg.data
 		self.mutex.release()
 
 class StateRunning(smach.State):
 
 	def __init__(self, dispatcher):
 		smach.State.__init__(self, outcomes=['run', 'stop', 'follow'])
-		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
-		self.sub_follow = rospy.Subscriber('/another_car', Bool, self.other_car_callback)
-		self.dispatcher = dispatcher
 		self.mutex = threading.Lock()
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
+		self.sub_emergency_stop = rospy.Subscriber('/emergency_stop', Float32, self.emergency_stop_callback)
+		self.sub_follow = rospy.Subscriber('/other_car', Bool, self.other_car_callback)
+		self.sub_memorization = rospy.Subscriber('/start_memorization', Bool, self.memorize_path_callback)
+		self.sub_start_publish = rospy.Subscriber('/start_publish_top', Float32, self.start_publish_callback)		
 		self.danger = 0.0
-		self.threshold = 0.8
-		self.sleep_time = 0.02
+		self.emergency_stop = 0.0
+		self.threshold = 0.5
+		self.sleep_time = 0.01
 		self.other_car = False
+		self.start_memorization = False
+		self.start_publish_top = 1.0
 
 	def execute(self, ud):
-
+		rospy.logerr("RUN")
+		self.dispatcher = dispatcher
+		self.dispatcher.switch_control('pure_pursuit')
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
+			#rospy.logerr("in run before publisher the control signals")
 			self.dispatcher.publish_control()
-			if self.danger > self.threshold:
+			if self.emergency_stop > self.threshold:
 				self.mutex.release()
 				return 'stop'
 
@@ -88,6 +116,7 @@ class StateRunning(smach.State):
 				self.mutex.release()
 				return 'follow'
 
+
 			self.mutex.release()
 			rospy.sleep(self.sleep_time)
 
@@ -96,35 +125,54 @@ class StateRunning(smach.State):
 		self.danger = msg.data
 		self.mutex.release()
 
+	def emergency_stop_callback(self, msg):
+		self.mutex.acquire()
+		self.emergency_stop = msg.data
+		self.mutex.release()
+
 	def other_car_callback(self, msg):
 		self.mutex.acquire()
 		self.other_car = msg.data
+		self.mutex.release()
+
+	def memorize_path_callback(self, msg):
+		self.mutex.acquire()
+		self.start_memorization = msg.data
+		self.mutex.release()
+
+	def start_publish_callback(self, msg):
+		self.mutex.acquire()
+		self.start_publish_top = msg.data
 		self.mutex.release()
 
 
 class StateStopped(smach.State):
 
 	def __init__(self, dispatcher):
-		smach.State.__init__(self, outcomes=['stop', 'run', 'follow'])
-
-		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
-		self.sub_other_car = rospy.Subscriber('/another_car', Bool, self.other_car_callback)
+		smach.State.__init__(self, outcomes=['idle', 'stop', 'run', 'follow'])
 		self.mutex = threading.Lock()
-
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
+		self.sub_emergency_stop = rospy.Subscriber('/emergency_stop', Float32, self.emergency_stop_callback)
+		self.sub_other_car = rospy.Subscriber('/other_car', Bool, self.other_car_callback)
+		self.sub_memorization = rospy.Subscriber('/start_memorization', Bool, self.memorize_path_callback)
+		self.sub_start_publish = rospy.Subscriber('/start_publish_top', Float32, self.start_publish_callback)	
 		self.danger = 0.0
+		self.emergency_stop = 0.0
 		self.threshold = 0.5
 		self.sleep_time = 0.1
 		self.other_car = False
+		self.start_memorization = False
+		self.start_publish_top = 0.0
 		# service call: stop tracking
 
 	def execute(self, ud):
-
+		rospy.logerr("STOP")
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
 
-			if self.danger < self.threshold:
+			if self.emergency_stop < self.threshold:
 				self.mutex.release()
-				return 'run'
+				return 'idle'
 
 			self.mutex.release()
 			rospy.sleep(self.sleep_time)
@@ -134,35 +182,51 @@ class StateStopped(smach.State):
 		self.danger = msg.data
 		self.mutex.release()
 
+	def emergency_stop_callback(self, msg):
+		self.mutex.acquire()
+		self.emergency_stop = msg.data
+		self.mutex.release()
+
 	def other_car_callback(self, msg):
 		self.mutex.acquire()
 		self.other_car = msg.data
 		self.mutex.release()
 
+	def memorize_path_callback(self, msg):
+		self.mutex.acquire()
+		self.start_memorization = msg.data
+		self.mutex.release()
+
+	def start_publish_callback(self, msg):
+		self.mutex.acquire()
+		self.start_publish_top = msg.data
+		self.mutex.release()
 
 class StateFollowing(smach.State):
 
 	def __init__(self, dispatcher):
 		smach.State.__init__(self, outcomes=['stop', 'idle', 'follow'])
-		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
-		self.sub_other_car = rospy.Subscriber('/another_car', Bool, self.other_car_callback)
-		self.dispatcher = dispatcher
-
 		self.mutex = threading.Lock()
+		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
+		self.sub_emergency_stop = rospy.Subscriber('/emergency_stop', Float32, self.emergency_stop_callback)
+		self.sub_other_car = rospy.Subscriber('/other_car', Bool, self.other_car_callback)
+		self.sub_memorization = rospy.Subscriber('/start_memorization', Bool, self.memorize_path_callback)
+		self.sub_start_publish = rospy.Subscriber('/start_publish_top', Float32, self.start_publish_callback)		
 		self.danger = 0.0
+		self.emergency_stop = 0.0
 		self.threshold = 0.5
 		self.sleep_time = 0.02
-		self.other_car = True
+		self.start_memorization= False
+		self.start_publish_top = 0.0
+		self.other_car= True
 
 	def execute(self, ud):
+		rospy.logerr("FOLLOW")
+		self.dispatcher = dispatcher
+		self.dispatcher.switch_control('pid')
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
 			self.dispatcher.publish_control()
-			if self.danger > self.threshold:
-				self.mutex.release()
-
-
-				return 'stop'
 			if not self.other_car:
 				self.mutex.release()
 				return 'idle'
@@ -176,9 +240,24 @@ class StateFollowing(smach.State):
 		self.danger = msg.data
 		self.mutex.release()
 
+	def emergency_stop_callback(self, msg):
+		self.mutex.acquire()
+		self.emergency_stop = msg.data
+		self.mutex.release()
+
 	def other_car_callback(self, msg):
 		self.mutex.acquire()
 		self.other_car = msg.data
+		self.mutex.release()
+
+	def memorize_path_callback(self, msg):
+		self.mutex.acquire()
+		self.start_memorization = msg.data
+		self.mutex.release()
+
+	def start_publish_callback(self, msg):
+		self.mutex.acquire()
+		self.start_publish_top = msg.data
 		self.mutex.release()
 
 if __name__ == "__main__":
@@ -196,7 +275,7 @@ if __name__ == "__main__":
 		smach.StateMachine.add('StateRunning', StateRunning(dispatcher),
 		                       transitions={'run':'StateRunning', 'stop':'StateStopped','follow':'StateFollowing'})
 		smach.StateMachine.add('StateStopped', StateStopped(dispatcher),
-		                       transitions={'stop':'StateStopped', 'run':'StateRunning', 'follow':'StateFollowing'})
+		                       transitions={'idle':'StateIdle', 'stop':'StateStopped', 'run':'StateRunning', 'follow':'StateFollowing'})
 		smach.StateMachine.add('StateFollowing', StateFollowing(dispatcher),
 		                       transitions={'idle':'StateIdle', 'stop':'StateStopped','follow':'StateFollowing'})
 

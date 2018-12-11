@@ -8,6 +8,7 @@ from pure_pursuit import PurePursuit
 from spline_interpolation import Spline2D
 from low_level_interface.msg import lli_ctrl_request
 from geometry_msgs.msg import Point, PoseStamped
+from nav_msgs.msg import Path
 
 
 class CircularAvoidance(ControlAlgorithm):
@@ -54,6 +55,8 @@ class CircularAvoidance(ControlAlgorithm):
 					current_path = arc
 
 		PP_control = PurePursuit()
+		if not type(current_path) == type(target):
+			current_path = target
 		control = PP_control.get_control(car_state, current_path)
 		if abs(control.steering) == 100:
 			control.velocity = 0
@@ -89,7 +92,9 @@ class CircularAvoidance(ControlAlgorithm):
 			pose = PoseStamped()
 			pose.pose.position = point
 			path.append(pose)
-		return path
+		path_msg = Path()
+		path_msg.poses = path
+		return path_msg
 
 
 	def get_closest_obstacle_on_path(self, path):
@@ -99,8 +104,8 @@ class CircularAvoidance(ControlAlgorithm):
 			center = c.center #Point
 			radius = c.true_radius + self.parameters['radius_padding']
 
-			for point in path.poses:
-				if self.point_msg_distance(point, center) < radius & local.center.x > 0:
+			for point in path:
+				if self.point_msg_distance(point, center) < radius and local.center.x > 0:
 					circles_on_path.append(local)
 		min_distance = 1000
 		min_c = None

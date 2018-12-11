@@ -23,7 +23,7 @@ class Dispatcher:
 		self.control_target = None
 		self.circle_obstacles = []
 		self.segment_obstacles = []
-		self.parameters = {'v':0, 'steering':0, 'k_lookahead':0.4, 'l':0.2, 'circle_obstacles':[], 'line_obstacles':[], 'turning_radius':0.4, 'radius_padding':0.2, 'target_distance':0, 'Ts':0.0125, 'K_yaw_P':1, 'K_yaw_D':0, 'K_yaw_I':0, 'd_des':1, 'K_dis_P':1, 'K_dis_D':0, 'K_dis_I':0}
+		self.parameters = {'v':0, 'steering':0, 'k_lookahead':0.4 , 'l':0.2, 'circle_obstacles':[], 'line_obstacles':[], 'turning_radius':0.4, 'radius_padding':0.2, 'target_distance':0.65, 'Ts':0.0125, 'K_yaw_P':1, 'K_yaw_D':0, 'K_yaw_I':0, 'd_des':1, 'K_dis_P':32, 'K_dis_D':1.9, 'K_dis_I':0.0}
 
 		self.switch_control(self.current_control_key)
 
@@ -32,7 +32,7 @@ class Dispatcher:
 		self.sub_control_target = None
 		self.sub_obstacles = None
 
-		#Publishers
+		#fddffers
 		self.pub_control_signal = rospy.Publisher(rospy.get_param('/dispatcher/control_signal_topic'), lli_ctrl_request)
 
 	'''
@@ -47,8 +47,10 @@ class Dispatcher:
 			control_signal = lli_ctrl_request()
 			control_signal.steering = 0
 			control_signal.velocity = 0
+			#rospy.logerr("Dispatcher: missing path or car state")
 			self.pub_control_signal.publish(control_signal)
 			return
+		rospy.logerr("Dispatcher: publishing the control signals")
 		control_signal = self.algorithm.get_control(car_state=self.car_state, target=self.control_target, parameters=self.parameters)
 		# Pure pursuit parameters
 		self.parameters['v'] = control_signal.velocity
@@ -67,15 +69,19 @@ class Dispatcher:
 		Initializes pid.
 	'''
 	def init_pid(self):
+		self.control_target = None
 		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/waypoint_topic'), PoseStamped, self.control_target_callback)
 		self.algorithm = PidControl()
+#		rospy.logerr("COntroller dispatch, init: " + str(self.algorithm.name))
 
 	'''
 		Initializes pure pursuit.
 	'''
 	def init_pp(self):
+		self.control_target = None
 		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/path_topic'), Path, self.control_target_callback)
 		self.algorithm = PurePursuit()
+#		rospy.logerr("COntroller dispatch, init: " + str(self.algorithm.name))
 
 	'''
 		Initializes stopping sequence.

@@ -8,7 +8,8 @@
 	<param name="steer_control_topic"       	 value="/lli/ctrl_request"/>
 	<param name="des_obstacle_topic"              	 value="/des_obstacle_top"/>
 	<param name="car_pose_topic"                     value="/SVEA2/pose"/>
-	<param name="laser_scan_topic"                     	 value="/scan"/>
+	<param name="laser_scan_topic"                   value="/scan"/>
+	<param name="emergency_stop_topic"		 value="/emergency_stop"/>
 	</node>
 </launch>
 

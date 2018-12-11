@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
 	<node pkg="path_planner" type="path_replanner.py" name="path_replanner">
-	<param name="leader_path_topic"                    value="/leader_path"/>
-	<param name="path_topic"                           value="/SVEA2/path"/>
+	<param name="path_topic"                           value="/leader_path"/>
 	<param name="replanner_path_topic"                 value="/replanner_path"/>
 	<param name="car_pose_topic"                       value="/SVEA2/pose"/>
 	<param name="obstacles_topic"                      value="/obstacles"/>

@@ -49,7 +49,6 @@ class Replanner:
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.path_top = rospy.get_param(rospy.get_name() + "/path_topic")
 		self.replanner_path_top = rospy.get_param(rospy.get_name() + "/replanner_path_topic")
-		self.leader_path_top = rospy.get_param(rospy.get_name() + "/leader_path_topic")
 		
 		# Publishers/Subscriber
 		self.sub_des_obstacle = rospy.Subscriber(self.des_obstacle_top, PoseStamped, self.save_des_obstacle)
@@ -57,7 +56,6 @@ class Replanner:
 		self.sub_danger = rospy.Subscriber(self.danger_top, Float32, self.save_danger)
 		self.sub_car_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
 		self.sub_path = rospy.Subscriber(self.path_top, Path, self.save_path)
-		#self.sub_leader_path = rospy.Subscriber(self.leader_path_top, Path, self.save_leader_path)
 		self.pub_path = rospy.Publisher(self.replanner_path_top, Path)
 		self.pub_marker = rospy.Publisher('/marker', PoseStamped)
 
@@ -70,6 +68,11 @@ class Replanner:
 
 	def save_state(self, state_msg):
 		self.state = state_msg
+		self.x_car = state_msg.pose.position.x
+	        self.y_car = state_msg.pose.position.y
+		orientation_q = state_msg.pose.orientation
+	        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+	        self.yaw_car = euler_from_quaternion(orientation_list)[2]
 		self.state_available = True
 
 	def save_obstacles(self, obstacle_msg):
@@ -81,7 +84,8 @@ class Replanner:
 		self.x_obstacle = des_obstacle_msg.pose.position.x
 		self.y_obstacle = des_obstacle_msg.pose.position.y
 		self.r = des_obstacle_msg.pose.position.z
-		self.transform_des_obstacle_frame()
+		if self.state_available:
+			self.transform_des_obstacle_frame()
 		
 
 	def parse_obstacles(self, obstacle_msg):
@@ -94,20 +98,20 @@ class Replanner:
 		self.transform_obstacles_frame()
 
 	def transform_des_obstacle_frame(self):
-			if self.state_available:
-				alpha = math.atan2(self.y_obstacle, self.x_obstacle)
-				theta = math.pi + self.yaw_car
-				rho = math.sqrt(self.x_obstacle**2 + self.y_obstacle**2)
-				self.x_obstacle_global = self.x_car + rho*math.cos(alpha + theta)
-				self.y_obstacle_global = self.y_car + rho*math.sin(alpha + theta)				
-			
-				marker_msg = PoseStamped()
-				marker_msg.header.frame_id = 'qualisys'
-				marker_msg.pose.position.x = self.x_obstacle_global
-				marker_msg.pose.position.y = self.y_obstacle_global
-	
-				self.pub_marker.publish(marker_msg)
+		if self.state_available:
+			alpha = math.atan2(self.y_obstacle, self.x_obstacle)
+			theta = math.pi + self.yaw_car
+			rho = math.sqrt(self.x_obstacle**2 + self.y_obstacle**2)
+			self.x_obstacle_global = self.x_car + rho*math.cos(alpha + theta)
+			self.y_obstacle_global = self.y_car + rho*math.sin(alpha + theta)				
 		
+			marker_msg = PoseStamped()
+			marker_msg.header.frame_id = 'qualisys'
+			marker_msg.pose.position.x = self.x_obstacle_global
+			marker_msg.pose.position.y = self.y_obstacle_global
+
+			self.pub_marker.publish(marker_msg)
+	
 	
 	def transform_obstacles_frame(self):
 		self.circle_obstacles_global = {}
@@ -351,12 +355,9 @@ class Replanner:
 
 """
 a = Replanner()
-
 if a.new_path():
 	print('ja')
 	a.get_new_path()
-
-
 plt.plot(a.cx, a.cy)
 circle1=plt.Circle((a.x_obstacle,a.y_obstacle),a.r,color='r')
 plt.gcf().gca().add_artist(circle1)
@@ -370,7 +371,7 @@ plt.show()
 if __name__ == '__main__':
 	rospy.init_node('path_replanner')
 	a = Replanner(safety_distance = 0.2)
-	rate = rospy.Rate(20)
+	rate = rospy.Rate(80)
 	while not rospy.is_shutdown():
 		if a.path_available and a.state_available:
 			a.parse_state(a.state)
@@ -378,14 +379,14 @@ if __name__ == '__main__':
 			if a.danger > 0.5 and a.obstacle_passed and a.new_path():
 				a.get_new_path()
 				a.obstacle_passed = False
-				rospy.logerr("in if in planner")
+				#rospy.logerr("in if in planner")
 				path_msg = a.coordinates_to_msg(a.new_cx, a.new_cy)
 			elif not a.obstacle_passed:
-				rospy.logerr("in elif in planner")
+				#rospy.logerr("in elif in planner")
 				a.check_obstacle_passed()
 				path_msg = a.coordinates_to_msg(a.new_cx, a.new_cy)
 			else:
-				rospy.logerr("in else in planner")
+				#rospy.logerr("in else in planner")
 				path_msg = a.coordinates_to_msg(a.cx, a.cy)
 			a.pub_path.publish(path_msg)
 			rate.sleep()
@@ -409,14 +410,4 @@ if __name__ == '__main__':
 				path_msg = a.coordinates_to_msg(a.cx, a.cy)
 			a.pub_path.publish(path_msg)
 		rate.sleep()
-
 '''
-
-
-
-
-	
-	
-		
-
-

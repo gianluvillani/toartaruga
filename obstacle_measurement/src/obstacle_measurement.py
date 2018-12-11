@@ -25,7 +25,8 @@ class obstacle_measurement:
 		self.obstacle_msg = Obstacles()
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
-		self.min_dist = 0.5
+		self.min_dist = 1
+		self.emergency_dist = 0.4
 		self.ctrl_vel = 0
 		self.ctrl_ang = 0
 		self.scan_available = False
@@ -37,10 +38,12 @@ class obstacle_measurement:
 		self.steer_control_top = rospy.get_param(rospy.get_name() + "/steer_control_topic")
 		self.car_pose_top = rospy.get_param(rospy.get_name() + "/car_pose_topic")
 		self.laser_scan_top = rospy.get_param(rospy.get_name() + "/laser_scan_topic")
+		self.emergency_stop_top = rospy.get_param(rospy.get_name() + "/emergency_stop_topic")
 
 		# Publishers and Subscribers
 		self.pub_des_obstacle = rospy.Publisher(self.des_obstacle_top, PoseStamped)
 		self.pub_danger = rospy.Publisher(self.danger_top, Float32)
+		self.pub_emergency_stop = rospy.Publisher(self.emergency_stop_top, Float32)
 		self.sub_obstacles = rospy.Subscriber(self.obstacles_top, Obstacles, self.save_obstacles)
 		self.sub_control = rospy.Subscriber(self.steer_control_top, lli_ctrl_request, self.save_ctrl_state)
 		self.sub_car_pose = rospy.Subscriber(self.car_pose_top, PoseStamped, self.save_state)
@@ -119,29 +122,26 @@ class obstacle_measurement:
 	def publish_danger(self):
 		danger_msg = Float32()
 		circle_obstacle_found = False
-		segment_obstacle_found = False
 		for circle in self.circle_obstacles:
 			if self.circle_collision(circle):
 				circle_obstacle_found = True
 				self.obstacle = circle
-		for segment in self.segment_obstacles:
-			if self.segment_collision(segment):
-				segment_obstacle_found = True
-		if segment_obstacle_found:
+		if circle_obstacle_found:
 			danger_msg.data = 1
 
-			#des_obstacle_msg = PoseStamped()
-			#des_obstacle_msg.pose.position.x = self.obstacle[0]
-			#des_obstacle_msg.pose.position.y = self.obstacle[1]
-			#des_obstacle_msg.pose.position.z = self.obstacle[2]
-			#self.pub_des_obstacle.publish(des_obstacle_msg)
+			des_obstacle_msg = PoseStamped()
+			des_obstacle_msg.pose.position.x = self.obstacle[0]
+			des_obstacle_msg.pose.position.y = self.obstacle[1]
+			des_obstacle_msg.pose.position.z = self.obstacle[2]
+			self.pub_des_obstacle.publish(des_obstacle_msg)
 
 		else:
 			danger_msg.data = 0
 		self.pub_danger.publish(danger_msg)
 
 	def publish_danger_from_lidar(self):
-		danger_msg = Float32()
+		
+		emergency_stop_msg = Float32()
 		obstacle_found = False
 		for i in range(len(self.obstacle_points)):
 			x = self.obstacle_points[i][0]
@@ -149,47 +149,23 @@ class obstacle_measurement:
 			if self.in_danger_zone(x,y):
 				obstacle_found = True
 		if obstacle_found:
-			danger_msg.data = 1
+			emergency_stop_msg = 1
 		else:
-			danger_msg.data = 0
-		self.pub_danger.publish(danger_msg)
-		
-	def segment_collision(self, segment_obstacle): # A segment_obstacle is a list [(first_point_x, first_point_y), (last_point_x, last_point_y)]
-		first_point_x = segment_obstacle[0][0]
-		first_point_y = segment_obstacle[0][1]
-		last_point_x = segment_obstacle[1][0]
-		last_point_y = segment_obstacle[1][1]
-		middle_point_x = (first_point_x + last_point_x)/2
-		middle_point_y = (first_point_y + last_point_y)/2
-		x_points = [first_point_x, last_point_x, middle_point_x]
-		y_points = [first_point_y, last_point_y, middle_point_y]
-		'''
-		first_rho_obs, first_phi_obs = cart2pol(first_point_x,first_point_y)
-		last_rho_obs, last_phi_obs = cart2pol(last_point_x,last_point_y)
-		rotation_angle = self.ctrl_ang/100*math.pi/4		
-		
-		first_phi_obs -= rotation_angle
-		last_phi_obs -= rotation_angle
-		
-		first_point_x, first_point_y = pol2cart(first_rho_obs, first_phi_obs)
-		last_point_x, last_point_y = pol2cart(last_rho_obs, last_phi_obs)
-	
-		middle_point_x = (first_point_x + last_point_x)/2
-		middle_point_y = (first_point_y + last_point_y)/2
-		'''
-		# Adaptive minimum allowed distance
-		#min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
-		min_dist = self.min_dist
-		r_car = 0.25
-		for x, y in zip(x_points, y_points):
-			if (x < - math.fabs(0.5*y)) and (math.fabs(y) < (r_car + 0.2)) and ((x**2 + y**2) < (r_car + min_dist)):
-				return True
-		return False
+			emergency_stop_msg = 0
+		self.pub_emergency_stop.publish(emergency_stop_msg)
 
 
 	def in_danger_zone(self,x_obs, y_obs):
 		r_car = 0.25
-		if x_obs < - math.fabs(0.5*y_obs) and math.fabs(y_obs) <  r_car + 0.5 and math.sqrt(x_obs**2 + y_obs**2) < r_car + self.min_dist:
+		
+		rho_obs, phi_obs = cart2pol(x_obs, y_obs)
+		rotation_angle = self.ctrl_ang/100*math.pi/4		
+		
+		phi_obs -= rotation_angle
+		
+		x_obs, y_obs = pol2cart(rho_obs, phi_obs)
+
+		if x_obs < - math.fabs(0.7*y_obs) and math.fabs(y_obs) <  r_car + 0.5 and math.sqrt(x_obs**2 + y_obs**2) < r_car + self.emergency_dist:
 			return True
 		else:
 			return False
@@ -200,8 +176,8 @@ if __name__ == "__main__":
 	rate = rospy.Rate(10)
 	my_obstacle_measurement = obstacle_measurement()
 	while not rospy.is_shutdown():
-		#my_obstacle_measurement.parse_obstacles(my_obstacle_measurement.obstacle_msg)
-		#my_obstacle_measurement.publish_danger()
+		my_obstacle_measurement.parse_obstacles(my_obstacle_measurement.obstacle_msg)
+		my_obstacle_measurement.publish_danger()
 		if my_obstacle_measurement.scan_available:
 			my_obstacle_measurement.parse_scan(my_obstacle_measurement.scan_msg)
 			my_obstacle_measurement.publish_danger_from_lidar()
