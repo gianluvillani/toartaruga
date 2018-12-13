@@ -12,7 +12,7 @@ class PurePursuit(ControlAlgorithm):
 
 	def __init__(self):
 		self.prev_vel = 0
-		self.name = "Pure Pursuit"
+		self.name = "pure_pursuit"
 		pass
 
 	'''
@@ -40,11 +40,11 @@ class PurePursuit(ControlAlgorithm):
 #		rospy.loginfo("Pure pursuit target: %s", pure_pursuit_target)
 		angle = self.calculate_steering_angle(point_car, pure_pursuit_target, False)
 		steering_signal = self.calculate_steering_signal(angle)
-		rospy.logerr("steering_signal: " + str(steering_signal))
+		#rospy.logerr("steering_signal: " + str(steering_signal))
 		velocity_signal = self.calculate_velocity_signal(steering_signal)
 		self.prev_vel = velocity_signal
 		velocity_signal = self.prev_vel
-		rospy.logerr("velocity_signal: " + str(velocity_signal))
+		#rospy.logerr("velocity_signal: " + str(velocity_signal))
 		ctrl_request_msg = lli_ctrl_request()
 		ctrl_request_msg.velocity = int(velocity_signal) #int for safety
 		ctrl_request_msg.steering = int(steering_signal) #int for safety
@@ -109,7 +109,7 @@ class PurePursuit(ControlAlgorithm):
 			alpha = math.pi - alpha
 
 		delta = math.atan2(2.0 * self.parameters.get('l') * math.sin(alpha) / lookahead_radius, 1.0)
-		rospy.logerr("Pure Pursuit: Delta is %s", delta)
+		#rospy.logerr("Pure Pursuit: Delta is %s", delta)
 
 		if abs(delta) > 0.90*math.pi / 4:
 			delta = math.copysign(0.90*math.pi / 4, delta)

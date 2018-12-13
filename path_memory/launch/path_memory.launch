@@ -2,7 +2,7 @@
 <launch>
 	<node pkg="path_memory" type="path_memorization.py" name="path_memorization">
 	<param name="leader_path_topic"                    value="/leader_path"/>
-	<param name="waypoint_topic"                       value="/leader/pose"/> 
+	<param name="waypoint_topic"                       value="/BOSS/pose"/> 
 	<param name="memorizing_active_topic"		   value="/start_memorization"/>
 	<param name="start_publish_topic"		   value="/start_publish_top"/>
 	</node>

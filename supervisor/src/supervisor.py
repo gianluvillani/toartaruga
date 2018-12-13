@@ -167,9 +167,11 @@ class StateStopped(smach.State):
 
 	def execute(self, ud):
 		rospy.logerr("STOP")
+		self.dispatcher = dispatcher
+		self.dispatcher.switch_control('stop')
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
-
+			self.dispatcher.publish_control()
 			if self.emergency_stop < self.threshold:
 				self.mutex.release()
 				return 'idle'
@@ -230,6 +232,10 @@ class StateFollowing(smach.State):
 			if not self.other_car:
 				self.mutex.release()
 				return 'idle'
+			if self.emergency_stop > 2*self.threshold:
+				self.mutex.release()
+				return 'stop'
+
 
 			self.mutex.release()
 			rospy.sleep(self.sleep_time)

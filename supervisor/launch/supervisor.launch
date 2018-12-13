@@ -6,7 +6,7 @@
 	<param name="leader_path_topic"                    value="/leader_path"/>
 	<param name="danger_topic"                         value="/danger"/>
 	<param name="emergency_stop_topic"                 value="/emergency_stop"/>
-	<param name="waypoint_topic"			   value="/leader/pose"/>
+	<param name="waypoint_topic"			   value="/BOSS/pose"/>
 	<param name="command_controller_follow_topic"      value="/start_stop_follow"/>
 	<param name="selected_controller"		   value="pure_pursuit"/>
 	<param name="obstacles_topic"			   value="/obstacles"/>

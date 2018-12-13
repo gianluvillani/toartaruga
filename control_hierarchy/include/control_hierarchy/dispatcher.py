@@ -10,13 +10,16 @@ from pure_pursuit import PurePursuit
 from pid_control import PidControl
 from stop_algorithm import StopAlgorithm
 from obstacle_pid import CircularAvoidance
+import math
 
 class Dispatcher:
 
 	def __init__(self, rate=30):
 		self.available_controls = {'pid':self.init_pid, 'pure_pursuit':self.init_pp, 'stop':self.init_stop, 'arc_avoidance':self.init_arc}
 		self.current_control_key = rospy.get_param(rospy.get_name() + '/selected_controller')
+		self.sub_leader_pose = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/waypoint_topic'), PoseStamped, self.save_leader_pose)
 		self.rate = rospy.Rate(rate)
+		self.leader_pose_available = False
 
 		self.algorithm = None
 		self.car_state = None
@@ -41,6 +44,10 @@ class Dispatcher:
 	def switch_control(self, new_control_key):
 		self.available_controls[new_control_key]()
 
+	def save_leader_pose(self, pose_msg):
+		self.leader_pose = pose_msg
+		self.leader_pose_available = True
+ 
 
 	def publish_control(self):
 		if self.car_state == None or self.control_target == None:
@@ -50,7 +57,17 @@ class Dispatcher:
 			#rospy.logerr("Dispatcher: missing path or car state")
 			self.pub_control_signal.publish(control_signal)
 			return
-		rospy.logerr("Dispatcher: publishing the control signals")
+		if self.leader_pose_available and self.algorithm.name == 'pure_pursuit':
+			if math.hypot(self.leader_pose.pose.position.x - self.car_state.pose.position.x,
+				      self.leader_pose.pose.position.y - self.car_state.pose.position.y) < 0.7:
+				
+				control_signal = lli_ctrl_request()
+				control_signal.steering = 0
+				control_signal.velocity = 0
+				#rospy.logerr("Dispatcher: missing path or car state")
+				self.pub_control_signal.publish(control_signal)
+				return
+		#rospy.logerr("Dispatcher: publishing the control signals")
 		control_signal = self.algorithm.get_control(car_state=self.car_state, target=self.control_target, parameters=self.parameters)
 		# Pure pursuit parameters
 		self.parameters['v'] = control_signal.velocity
