@@ -26,7 +26,7 @@ class obstacle_measurement:
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
 		self.min_dist = 1
-		self.emergency_dist = 0.5
+		self.emergency_dist = 0.3
 		self.ctrl_vel = 0
 		self.ctrl_ang = 0
 		self.scan_available = False
@@ -165,7 +165,7 @@ class obstacle_measurement:
 		
 		x_obs, y_obs = pol2cart(rho_obs, phi_obs)
 
-		if x_obs < - math.fabs(0.5*y_obs) and math.fabs(y_obs) <  r_car + 0.5 and math.sqrt(x_obs**2 + y_obs**2) < r_car + self.emergency_dist:
+		if x_obs < - math.fabs(y_obs) and math.fabs(y_obs) <  r_car + 0.25 and math.sqrt(x_obs**2 + y_obs**2) < r_car + self.emergency_dist:
 			#rospy.logerr("obstacle_measurement: x_obs = %s, y_obs = %s", x_obs, y_obs)
 			return True
 		else:

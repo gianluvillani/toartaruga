@@ -232,7 +232,7 @@ class StateFollowing(smach.State):
 			if not self.other_car:
 				self.mutex.release()
 				return 'idle'
-			if self.emergency_stop > 2*self.threshold:
+			if self.emergency_stop > self.threshold:
 				self.mutex.release()
 				return 'stop'
 
