@@ -7,6 +7,7 @@ from std_msgs.msg import Float32, Bool
 from nav_msgs.msg import Path
 import threading
 from control_hierarchy.dispatcher import Dispatcher
+import time 
 
 
 class StateIdle(smach.State):
@@ -16,7 +17,7 @@ class StateIdle(smach.State):
 		self.mutex = threading.Lock()
 		self.sub_danger = rospy.Subscriber('/danger', Float32, self.danger_callback)
 		self.sub_emergency_stop = rospy.Subscriber('/emergency_stop', Float32, self.emergency_stop_callback)
-		self.sub_path = rospy.Subscriber('/leader_path', Path, self.path_callback)
+		self.sub_path = rospy.Subscriber('/race_course', Path, self.path_callback)
 		self.sub_follow = rospy.Subscriber('/other_car', Bool, self.other_car_callback)
 		self.sub_memorization = rospy.Subscriber('/start_memorization', Bool, self.memorize_path_callback)
 		self.sub_start_publish = rospy.Subscriber('/start_publish_top', Float32, self.start_publish_callback)
@@ -24,13 +25,16 @@ class StateIdle(smach.State):
 		self.emergency_stop = 0.0
 		self.threshold = 0.5
 		self.start_memorization = False
-		self.sleep_time = 0.1
+		self.sleep_time = 0.01
 		self.path = None
 		self.other_car = False
 		self.start_publish_top = 0.0
 
 	def execute(self, ud):
 		rospy.logerr("IDLE")
+		self.dispatcher = dispatcher
+		self.dispatcher.switch_control('stop')
+		self.dispatcher.publish_control()
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
 			if self.other_car:
@@ -102,12 +106,15 @@ class StateRunning(smach.State):
 
 	def execute(self, ud):
 		rospy.logerr("RUN")
+		#t0 = time.time()
 		self.dispatcher = dispatcher
 		self.dispatcher.switch_control('pure_pursuit')
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
 			#rospy.logerr("in run before publisher the control signals")
 			self.dispatcher.publish_control()
+			#t1 = time.time()
+			#rospy.logerr("The time in RUN : %s",t1-t0)
 			if self.emergency_stop > self.threshold:
 				self.mutex.release()
 				return 'stop'
@@ -159,7 +166,7 @@ class StateStopped(smach.State):
 		self.danger = 0.0
 		self.emergency_stop = 0.0
 		self.threshold = 0.5
-		self.sleep_time = 0.1
+		self.sleep_time = 0.01
 		self.other_car = False
 		self.start_memorization = False
 		self.start_publish_top = 0.0
@@ -169,9 +176,9 @@ class StateStopped(smach.State):
 		rospy.logerr("STOP")
 		self.dispatcher = dispatcher
 		self.dispatcher.switch_control('stop')
+		self.dispatcher.publish_control()
 		while not rospy.is_shutdown():
 			self.mutex.acquire()
-			self.dispatcher.publish_control()
 			if self.emergency_stop < self.threshold:
 				self.mutex.release()
 				return 'idle'
@@ -217,7 +224,7 @@ class StateFollowing(smach.State):
 		self.danger = 0.0
 		self.emergency_stop = 0.0
 		self.threshold = 0.5
-		self.sleep_time = 0.02
+		self.sleep_time = 0.01
 		self.start_memorization= False
 		self.start_publish_top = 0.0
 		self.other_car= True

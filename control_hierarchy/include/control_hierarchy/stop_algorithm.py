@@ -1,5 +1,5 @@
 #!/usr/bin/env
-
+import rospy
 from control_algorithm import ControlAlgorithm
 from low_level_interface.msg import lli_ctrl_request
 
@@ -10,9 +10,10 @@ class StopAlgorithm(ControlAlgorithm):
 		pass
 
 
-	def get_control(self, car_state, target, parameters=None):
+	def get_control(self, car_state, target, parameters={'steering':0}):
 		control = lli_ctrl_request()
-		control.velocity = -10
-		control.steering = 0
+		control.velocity = -100
+		control.steering = parameters['steering']
+		rospy.logerr("Stop algorithm")
 
 		return control

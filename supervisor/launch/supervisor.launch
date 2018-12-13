@@ -2,7 +2,7 @@
 <launch>
 	<node pkg="supervisor" type="supervisor.py" name="supervisor">
 	<param name="command_controller_topic"             value="/start_stop_controller"/>
-	<param name="path_topic"                           value="/replanner_path"/>
+	<param name="path_topic"                           value="/race_course"/>
 	<param name="leader_path_topic"                    value="/leader_path"/>
 	<param name="danger_topic"                         value="/danger"/>
 	<param name="emergency_stop_topic"                 value="/emergency_stop"/>

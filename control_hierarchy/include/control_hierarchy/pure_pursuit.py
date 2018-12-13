@@ -13,6 +13,7 @@ class PurePursuit(ControlAlgorithm):
 	def __init__(self):
 		self.prev_vel = 0
 		self.name = "pure_pursuit"
+
 		pass
 
 	'''
@@ -40,6 +41,8 @@ class PurePursuit(ControlAlgorithm):
 #		rospy.loginfo("Pure pursuit target: %s", pure_pursuit_target)
 		angle = self.calculate_steering_angle(point_car, pure_pursuit_target, False)
 		steering_signal = self.calculate_steering_signal(angle)
+		self.prev_sterring = steering_signal 
+		steering_signal  = self.prev_sterring
 		#rospy.logerr("steering_signal: " + str(steering_signal))
 		velocity_signal = self.calculate_velocity_signal(steering_signal)
 		self.prev_vel = velocity_signal
@@ -127,10 +130,9 @@ class PurePursuit(ControlAlgorithm):
 		v_max = 25
 		#return max(0, v_max * (1 - 5*self.distance_to_path)) + v_max
 		#return v_max*(1-abs(steering_signal)/max(delta_max, abs(steering_signal))) + 30 
-		return 20
+		return 40
 
-	'''
-		path: Path msg
+	'''		path: Path msg
 		
 		returns:[(x,y,k)] list of tuples (x, y, curvature)}
 	'''

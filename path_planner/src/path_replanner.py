@@ -376,12 +376,12 @@ if __name__ == '__main__':
 		if a.path_available and a.state_available:
 			a.parse_state(a.state)
 			a.parse_path(a.path)
-			if a.danger > 0.5 and a.obstacle_passed and a.new_path():
+			if a.danger > 4 and a.obstacle_passed and a.new_path():
 				a.get_new_path()
 				a.obstacle_passed = False
 				#rospy.logerr("in if in planner")
 				path_msg = a.coordinates_to_msg(a.new_cx, a.new_cy)
-			elif not a.obstacle_passed:
+			elif not a.obstacle_passed and False:
 				#rospy.logerr("in elif in planner")
 				a.check_obstacle_passed()
 				path_msg = a.coordinates_to_msg(a.new_cx, a.new_cy)

@@ -26,7 +26,7 @@ class obstacle_measurement:
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
 		self.min_dist = 1
-		self.emergency_dist = 0.5
+		self.emergency_dist = 0.7
 		self.ctrl_vel = 0
 		self.ctrl_ang = 0
 		self.scan_available = False
@@ -158,15 +158,14 @@ class obstacle_measurement:
 	def in_danger_zone(self,x_obs, y_obs):
 		r_car = 0.25
 		
-		rho_obs, phi_obs = cart2pol(x_obs, y_obs)
-		rotation_angle = self.ctrl_ang/100*math.pi/4		
+		#rho_obs, phi_obs = cart2pol(x_obs, y_obs)
+		#rotation_angle = self.ctrl_ang/100*math.pi/4		
 		
-		phi_obs -= rotation_angle
+		#phi_obs -= rotation_angle
 		
-		x_obs, y_obs = pol2cart(rho_obs, phi_obs)
+		#x_obs, y_obs = pol2cart(rho_obs, phi_obs)
 
-		if x_obs < - math.fabs(0.5*y_obs) and math.fabs(y_obs) <  r_car + 0.5 and math.sqrt(x_obs**2 + y_obs**2) < r_car + self.emergency_dist:
-			#rospy.logerr("obstacle_measurement: x_obs = %s, y_obs = %s", x_obs, y_obs)
+		if x_obs < - math.fabs(0.8*y_obs) and math.fabs(y_obs) <  r_car + 0.15 and math.sqrt(x_obs**2 + y_obs**2) < r_car + self.emergency_dist:
 			return True
 		else:
 			return False
