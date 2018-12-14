@@ -34,7 +34,10 @@ class PidControl(ControlAlgorithm):
 	                                                     'K_dis_P':1, 'K_dis_D':0, 'K_dis_I':0}):
 		self.parameters = parameters
 		x_y_yaw = self.pose_to_xy_yaw(car_state)
-		target_xyyaw = self.pose_to_xy_yaw(target)
+		try:
+			target_xyyaw = self.pose_to_xy_yaw(target['pid'])
+		except:
+			return lli_ctrl_request()
 		delta, v = self.compute_velocity_angular(x_y_yaw['x'], x_y_yaw['y'], x_y_yaw['yaw'][2], target_xyyaw['x'], target_xyyaw['y'])
 		ctrl_request = lli_ctrl_request()
 		ctrl_request.steering = self.calculate_steering_signal(delta)

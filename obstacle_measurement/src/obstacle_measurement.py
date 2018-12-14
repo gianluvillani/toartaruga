@@ -25,8 +25,8 @@ class obstacle_measurement:
 		self.obstacle_msg = Obstacles()
 		self.segment_obstacles = []		
 		self.circle_obstacles = []
-		self.min_dist = 1
-		self.emergency_dist = 0.3
+		self.min_dist = 1.2
+		self.emergency_dist = 0.25
 		self.ctrl_vel = 0
 		self.ctrl_ang = 0
 		self.scan_available = False
@@ -114,7 +114,7 @@ class obstacle_measurement:
 		# Adaptive minimum allowed distance
 		#min_dist = self.min_dist + 0.1*abs(self.ctrl_vel)
 		min_dist = self.min_dist
-		if x_obs < - math.fabs(0.1*y_obs) and math.fabs(y_obs) <  r_car + r_obs + 0.5 and math.sqrt(x_obs**2 + y_obs**2) < r_car + min_dist:
+		if x_obs < - math.fabs(0.1*y_obs) and math.fabs(y_obs) <  r_car + r_obs + 0.6 and math.sqrt(x_obs**2 + y_obs**2) < r_car + min_dist:
 			return True
 		else:
 			return False

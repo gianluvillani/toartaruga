@@ -23,7 +23,7 @@ class Dispatcher:
 
 		self.algorithm = None
 		self.car_state = None
-		self.control_target = None
+		self.control_target = {}
 		self.circle_obstacles = []
 		self.segment_obstacles = []
 		self.parameters = {'v':0, 'steering':0, 'k_lookahead':0.4 , 'l':0.2, 'circle_obstacles':[], 'line_obstacles':[], 'turning_radius':0.4, 'radius_padding':0.2, 'target_distance':0.65, 'Ts':0.0125, 'K_yaw_P':1, 'K_yaw_D':0, 'K_yaw_I':0, 'd_des':1, 'K_dis_P':32, 'K_dis_D':1.9, 'K_dis_I':0.0}
@@ -86,25 +86,30 @@ class Dispatcher:
 		Initializes pid.
 	'''
 	def init_pid(self):
-		self.control_target = None
-		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/waypoint_topic'), PoseStamped, self.control_target_callback)
+		try:
+			self.sub_control_target.unregister()
+		except:
+			pass
+		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/waypoint_topic'), PoseStamped, self.control_target_callback_pid)
 		self.algorithm = PidControl()
 #		rospy.logerr("COntroller dispatch, init: " + str(self.algorithm.name))
 
-	'''
+		'''
 		Initializes pure pursuit.
-	'''
+		'''
 	def init_pp(self):
-		self.control_target = None
-		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/path_topic'), Path, self.control_target_callback)
+		try:
+			self.sub_control_target.unregister()
+		except:
+			pass
+		self.sub_control_target = rospy.Subscriber(rospy.get_param(rospy.get_name() + '/path_topic'), Path, self.control_target_callback_pp)
 		self.algorithm = PurePursuit()
-#		rospy.logerr("COntroller dispatch, init: " + str(self.algorithm.name))
-
-	'''
+		rospy.logerr("Controller dispatch, init: " + str(self.algorithm.name))
+		rospy.logerr("Control target: " + str(self.sub_control_target))
+		'''
 		Initializes stopping sequence.
-	'''
+		'''
 	def init_stop(self):
-		self.sub_control_target = None
 		self.algorithm = StopAlgorithm()
 
 	def init_arc(self):
@@ -116,8 +121,12 @@ class Dispatcher:
 	def car_state_callback(self, msg):
 		self.car_state = msg
 
-	def control_target_callback(self, msg):
-		self.control_target = msg
+	def control_target_callback_pid(self, msg):
+		self.control_target['pid'] = msg
+		#rospy.logerr("In dispatcher: control target = %s", self.control_target)
+
+	def control_target_callback_pp(self, msg):
+		self.control_target['pure_pursuit'] = msg
 
 	def obstacles_callback(self, msg):
 		self.circle_obstacles = msg.circles

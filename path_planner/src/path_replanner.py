@@ -138,7 +138,7 @@ class Replanner:
 	        self.yaw_car = euler_from_quaternion(orientation_list)[2]
 	
 	def check_obstacle_passed(self):
-		if ((self.x_car - self.x_obstacle_global)**2 + (self.y_car - self.y_obstacle_global)**2) > self.r + 0.5:
+		if ((self.x_car - self.x_obstacle_global)**2 + (self.y_car - self.y_obstacle_global)**2) > self.r + 0.7:
 			self.obstacle_passed = True
 			
 	def check_obstacle_passed1(self):
@@ -370,7 +370,7 @@ plt.show()
 
 if __name__ == '__main__':
 	rospy.init_node('path_replanner')
-	a = Replanner(safety_distance = 0.2)
+	a = Replanner(safety_distance = 0.3)
 	rate = rospy.Rate(80)
 	while not rospy.is_shutdown():
 		if a.path_available and a.state_available:

@@ -98,10 +98,13 @@ class ControlAlgorithm:
         return circle_obstacles_global
 
     def path_to_point_list(self, path):
-        point_list = []
-        for pose_stamped in path.poses:
-            p = Point()
-            p.x = pose_stamped.pose.position.x
-            p.y = pose_stamped.pose.position.y
-            point_list.append(p)
-        return point_list
+
+	point_list = []
+	for pose_stamped in path.poses:
+	    p = Point()
+	    p.x = pose_stamped.pose.position.x
+	    p.y = pose_stamped.pose.position.y
+	    point_list.append(p)
+	return point_list
+	
+

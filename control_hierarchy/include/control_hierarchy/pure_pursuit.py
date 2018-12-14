@@ -30,14 +30,20 @@ class PurePursuit(ControlAlgorithm):
 	'''
 	def get_control(self, car_state, target, parameters={'v':50, 'steering':0, 'k_lookahead':1, 'l':2}):
 		self.parameters = parameters
-		self.target = self.path_to_point_list(target)
+		try:
+
+			self.target = self.path_to_point_list(target['pure_pursuit'])
+		except:
+			#rospy.logerr("In PP: target = %s", target)
+			rospy.logerr("In PP: try failed")
+			return lli_ctrl_request()
 		self.distance_to_path = 0
 
 		point_path = self.path_to_spline_list(self.target)
 		point_car = self.pose_to_xy_yaw(car_state)
-#		rospy.loginfo("Path is: %s", point_path)
+	#		rospy.loginfo("Path is: %s", point_path)
 		pure_pursuit_target = self.find_target_point(point_car, point_path)
-#		rospy.loginfo("Pure pursuit target: %s", pure_pursuit_target)
+	#		rospy.loginfo("Pure pursuit target: %s", pure_pursuit_target)
 		angle = self.calculate_steering_angle(point_car, pure_pursuit_target, False)
 		steering_signal = self.calculate_steering_signal(angle)
 		#rospy.logerr("steering_signal: " + str(steering_signal))
@@ -127,7 +133,7 @@ class PurePursuit(ControlAlgorithm):
 		v_max = 25
 		#return max(0, v_max * (1 - 5*self.distance_to_path)) + v_max
 		#return v_max*(1-abs(steering_signal)/max(delta_max, abs(steering_signal))) + 30 
-		return 20
+		return 25
 
 	'''
 		path: Path msg
