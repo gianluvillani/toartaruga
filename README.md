@@ -82,6 +82,9 @@ The vehicle is able to perceive an obstacle on the path (one at a time) and to r
 A new replanner, that takes into account all the obstacles on the path has been designed. Nevertheless, given the reactive nature of the planner and the noise unfiltered data used, that planned path was too unstable to be actually followed by the real car.
 A path memorization node has been implemented in order to memorize the path of the leader car whenever the follower car is stopped somewhere else performing some tasks.
 
+### Demo 2 (Week 7)
+Final demonstration part 2: platoonig, path memorization and the obstacle avoidance.
+
 ### Full demo 2 command list
 To start running the system
 <code>
