@@ -87,9 +87,11 @@ Final demonstration part 2: platoonig, path memorization and the obstacle avoida
 
 ### Full demo 2 command list
 To start running the system
+
 <code>
   $ roslaunch monitor main.launch 
 </code>
+
 To start following the leader:  
 <code>
     $ rostopic pub /other_car std_msgs/Bool "data: True"
