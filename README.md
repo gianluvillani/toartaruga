@@ -116,4 +116,32 @@ Simulator, /simulator/odom can be used as a ghost car to be followed
     $  rosrun vehicle_simulation vehicle_simulation.py
 </code>
 
-IN PROGRESS
+### Static Obstacle Avoidance (Week 5)
+The vehicle is able to perceive an obstacle on the path (one at a time) and to replan around it. The obstacle is assumed to be static and it is assumed that the obstacle is perceived early enough to avoid it. 
+
+### Dynamic Obstacle Avoidance(failed) and Path Memorization (Week 6)
+A new replanner, that takes into account all the obstacles on the path has been designed. Nevertheless, given the reactive nature of the planner and the noise unfiltered data used, that planned path was too unstable to be actually followed by the real car.
+A path memorization node has been implemented in order to memorize the path of the leader car whenever the follower car is stopped somewher else performing some tasks.
+
+### Full demo 2 command list
+To start following:  
+<code>
+    $ rostopic pub /other_car std_msgs/Bool "data: True"
+</code>
+
+To stop following and start memorization:  
+<code>
+    $ rostopic pub /other_car std_msgs/Bool "data: False"
+  
+    $ rostopic pub /start_memorizing std_msgs/Bool "data: True"
+</code>
+
+To start following the memorized path:   
+<code>
+    $ rostopic pub /start_publish_top std_msgs/Float32 "data: 1.0"
+</code>
+
+If you want to simulate and visualize the vehicle as well   
+<code>
+  $ rviz rviz
+</code>
