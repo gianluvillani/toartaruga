@@ -2,10 +2,6 @@
 Group 2 code for SML Grand Challenge Project Course (KTH)
 
 
-## Current state:
-Everything working in simulation (Pure Pursuit). Tested in SML on the real platform. Obstacle detection implemented.
-
-
 ### Basic Instructions:
 - Clone the repo into your catkin_ws/src
 - Catkin_make into your repo
