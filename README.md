@@ -120,7 +120,11 @@ A new replanner, that takes into account all the obstacles on the path has been 
 A path memorization node has been implemented in order to memorize the path of the leader car whenever the follower car is stopped somewher else performing some tasks.
 
 ### Full demo 2 command list
-To start following:  
+To start running the system
+<code>
+  $ roslaunch monitor main.launch 
+</code>
+To start following the leader:  
 <code>
     $ rostopic pub /other_car std_msgs/Bool "data: True"
 </code>
