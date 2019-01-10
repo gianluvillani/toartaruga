@@ -43,16 +43,6 @@ Possible features to be implemented/modified:
 - Control should not be necessarily 'synchronized' with the simulation. More explanation later
 
 
-### First controller package 
-The controller implements a simple pure pursuit algorithm for steering angle computation. The input velocity is kept fixed. 
-Subscribes to Path, Odometry topics.
-Publishes to lli_ctrl_request topic.
-
-If you want to run this pursuit controller:   
-<code>
-  $ rosrun first_controller pure_pursuit.py   
-</code>
-
 ### Pure Pursuit validation + Launch files (Week 1)
 The pure pursuit controller works both in simulation and real world. Reference path, circle with 1m radius. 
 Possible improvements:
