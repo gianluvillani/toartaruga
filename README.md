@@ -14,8 +14,11 @@ Everything working in simulation (Pure Pursuit). Tested in SML on the real platf
 Start roscore  
 <code>
   mkdir -p ./ws/src
+  
   cd ./ws
+  
   catkin init
+  
   cd src
 </code>
 Start serial communication  
