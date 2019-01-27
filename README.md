@@ -15,7 +15,9 @@ Start roscore
 <code>
   $ roscore
 </code>
-
+'''bash
+mkdir -p ./ws/src
+'''
 Start serial communication  
 <code>
   $ rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200
