@@ -13,7 +13,10 @@ Everything working in simulation (Pure Pursuit). Tested in SML on the real platf
 ### Run the manual(teleop) controller
 Start roscore  
 <code>
-  $ roscore
+mkdir -p ./ws/src
+cd ./ws
+catkin init
+cd src
 </code>
 Start serial communication  
 <code>
